@@ -5,22 +5,53 @@ use regex::Regex;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-fn is_valid_input(s: &str) -> bool {
+struct Data {
+    low: usize,
+    high: usize,
+    letter: u8,
+    password: String,
+}
+
+fn parse_line(s: &str) -> Option<Data> {
     lazy_static! {
         static ref RE: Regex = Regex::new(r"(\d+)-(\d+) ([a-z]): ([a-z]+)").unwrap();
     }
 
     match RE.captures(s) {
-        None =>  return false,
+        None => return None,
         Some(caps) => {
-            let low: usize = caps[1].trim().parse().unwrap();
-            let high: usize = caps[2].trim().parse().unwrap();
-            let letter: u8 = caps[3].as_bytes()[0];
-            let password: &str = &caps[4];
+            return Some(Data {
+                low: caps[1].trim().parse().unwrap(),
+                high: caps[2].trim().parse().unwrap(),
+                letter: caps[3].as_bytes()[0],
+                password: String::from(&caps[4]),
+            })
+        }
+    }
+}
 
-            let count = password.as_bytes().iter().filter(|&&c| c == letter).count();
+fn is_valid_input(s: &str) -> bool {
+    match parse_line(s) {
+        None => return false,
+        Some(data) => {
+            let count = data
+                .password
+                .as_bytes()
+                .iter()
+                .filter(|&&c| c == data.letter)
+                .count();
+            return count >= data.low && count <= data.high;
+        }
+    }
+}
 
-            return count >= low && count <= high;
+fn is_valid_input_part2(s: &str) -> bool {
+    match parse_line(s) {
+        None => return false,
+        Some(data) => {
+            let is_pos1: bool = data.password.as_bytes()[data.low - 1] == data.letter;
+            let is_pos2: bool = data.password.as_bytes()[data.high - 1] == data.letter;
+            return is_pos1 ^ is_pos2;
         }
     }
 }
@@ -31,7 +62,7 @@ fn main() {
     let buf_reader = BufReader::new(file);
     let count = buf_reader
         .lines()
-        .filter(|line| is_valid_input(line.as_ref().unwrap()))
+        .filter(|line| is_valid_input_part2(line.as_ref().unwrap()))
         .count();
     println!("Hello, world! Result is : \n{:?}", count);
 }
