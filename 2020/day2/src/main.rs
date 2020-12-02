@@ -1,6 +1,4 @@
-#[macro_use]
-extern crate lazy_static;
-
+use lazy_static::lazy_static;
 use regex::Regex;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
@@ -12,28 +10,31 @@ struct Data {
     password: String,
 }
 
-fn parse_line(s: &str) -> Option<Data> {
-    lazy_static! {
-        static ref RE: Regex = Regex::new(r"(\d+)-(\d+) ([a-z]): ([a-z]+)").unwrap();
-    }
+impl std::str::FromStr for Data {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        lazy_static! {
+            static ref RE: Regex = Regex::new(r"(\d+)-(\d+) ([a-z]): ([a-z]+)").unwrap();
+        }
 
-    match RE.captures(s) {
-        None => return None,
-        Some(caps) => {
-            return Some(Data {
-                low: caps[1].trim().parse().unwrap(),
-                high: caps[2].trim().parse().unwrap(),
-                letter: caps[3].as_bytes()[0],
-                password: String::from(&caps[4]),
-            })
+        match RE.captures(s) {
+            None => return Err("COUCOU"),
+            Some(caps) => {
+                return Ok(Data {
+                    low: caps[1].trim().parse().map_err(|_| "error parsing low")?,
+                    high: caps[2].trim().parse().map_err(|_| "error parsing high")?,
+                    letter: caps[3].as_bytes()[0],
+                    password: String::from(&caps[4]),
+                })
+            }
         }
     }
 }
 
 fn is_valid_input(s: &str) -> bool {
-    match parse_line(s) {
-        None => return false,
-        Some(data) => {
+    match s.parse::<Data>() {
+        Err(_) => return false,
+        Ok(data) => {
             let count = data
                 .password
                 .as_bytes()
@@ -46,9 +47,9 @@ fn is_valid_input(s: &str) -> bool {
 }
 
 fn is_valid_input_part2(s: &str) -> bool {
-    match parse_line(s) {
-        None => return false,
-        Some(data) => {
+    match s.parse::<Data>() {
+        Err(_) => return false,
+        Ok(data) => {
             let is_pos1: bool = data.password.as_bytes()[data.low - 1] == data.letter;
             let is_pos2: bool = data.password.as_bytes()[data.high - 1] == data.letter;
             return is_pos1 ^ is_pos2;
