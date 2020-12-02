@@ -29,13 +29,13 @@ fn find_triplet_sorted(values: &[i32], target_value: i32) -> Option<i32> {
     None
 }
 
-fn find_pair(values: &Vec<i32>, target_value: i32) -> Option<i32> {
+fn find_pair(values: &[i32], target_value: i32) -> Option<i32> {
     let mut values_copy =  values.to_vec();
     values_copy.sort();
     return find_pair_sorted(&values_copy, target_value);
 }
 
-fn find_triplet(values: &Vec<i32>, target_value: i32) -> Option<i32> {
+fn find_triplet(values: &[i32], target_value: i32) -> Option<i32> {
 
     let mut values_copy =  values.to_vec();
     values_copy.sort();
