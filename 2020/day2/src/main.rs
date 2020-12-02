@@ -41,7 +41,9 @@ fn is_valid_input(s: &str) -> bool {
                 .iter()
                 .filter(|&&c| c == data.letter)
                 .count();
-            return count >= data.low && count <= data.high;
+
+            return (data.low..=data.high).contains(&count);
+            // return count >= data.low && count <= data.high;
         }
     }
 }
@@ -50,8 +52,9 @@ fn is_valid_input_part2(s: &str) -> bool {
     match s.parse::<Data>() {
         Err(_) => return false,
         Ok(data) => {
-            let is_pos1: bool = data.password.as_bytes()[data.low - 1] == data.letter;
-            let is_pos2: bool = data.password.as_bytes()[data.high - 1] == data.letter;
+            let byte_slice : &[u8] = data.password.as_bytes();
+            let is_pos1: bool = byte_slice[data.low - 1] == data.letter;
+            let is_pos2: bool = byte_slice[data.high - 1] == data.letter;
             return is_pos1 ^ is_pos2;
         }
     }
@@ -63,7 +66,7 @@ fn main() {
     let buf_reader = BufReader::new(file);
     let count = buf_reader
         .lines()
-        .filter(|line| is_valid_input_part2(line.as_ref().unwrap()))
+        .filter(|line| is_valid_input(line.as_ref().unwrap()))
         .count();
     println!("Hello, world! Result is : \n{:?}", count);
 }
