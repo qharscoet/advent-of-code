@@ -1,7 +1,7 @@
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
-fn count_trees(grid: &Vec<Vec<char>>, slope: (i32, i32)) -> u32 {
+fn count_trees(grid: &Vec<Vec<char>>, slope: (usize, usize)) -> u32 {
     let (right, down) = slope;
 
     let mut curr_line = 0;
@@ -12,12 +12,26 @@ fn count_trees(grid: &Vec<Vec<char>>, slope: (i32, i32)) -> u32 {
             count += 1;
         }
 
-        curr_col = (curr_col + (right as usize)) % grid[curr_line].len();
-        curr_line += down as usize;
+        curr_col = (curr_col + right) % grid[curr_line].len();
+        curr_line += down;
     }
 
     return count;
 }
+
+
+fn count_trees_recursive(grid: &Vec<Vec<char>>, slope: (usize, usize)) -> u32 {
+    fn count(grid: &Vec<Vec<char>>, slope: (usize, usize), r:usize, c:usize, acc:u32) ->u32{
+        if r >= grid.len() {
+            return acc;
+        } else {
+            return  count(grid, slope, r + slope.1, (c + slope.0) % grid[r].len(), acc + (grid[r][c] == '#') as u32);
+        }
+    }
+
+    count(grid, slope, 0,0, 0)
+}
+
 
 //Main
 fn main() {
