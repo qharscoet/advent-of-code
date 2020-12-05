@@ -3,7 +3,7 @@ use std::io::{BufRead, BufReader};
 
 fn get_seat_id(s: &str) -> u16 {
     // u32::from_str_radix(&s.chars().map(|c| if c == 'F' || c == 'L' {'0'} else {'1'}).collect::<String>(),2).unwrap_or_default()
-    s.chars().rev().enumerate().fold(0, |val, (i, c)| val +  ((c == 'B' || c == 'R') as u16) * (1 << i))
+    s.chars().rev().enumerate().fold(0, |val, (i, c)| val |  ((c == 'B' || c == 'R') as u16) << i)
 }
 
 fn main() {
