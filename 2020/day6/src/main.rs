@@ -7,6 +7,14 @@ fn get_group_count(group: &[String]) -> u32 {
     set.len() as u32
 }
 
+fn get_group_count_part2(group: &[String]) -> u32 {
+    let mut sets = group.iter().map(|s| s.chars().collect::<HashSet<char>>());
+    let first_set = sets.next().unwrap_or(HashSet::new());
+    let intersect = sets.fold(first_set, |acc, set| &acc & &set);
+
+    intersect.len() as u32
+}
+
 fn main() {
     let file = File::open("./src/input.txt").expect("Error opening the input");
     let buf_reader = BufReader::new(file);
@@ -24,4 +32,7 @@ fn main() {
 
     let sum:u32 = groups.iter().map(|g| get_group_count(g)).sum();
     println!("Hello, world! Result is : \n{:?}", sum);
+
+    let sum2:u32 = groups.iter().map(|g| get_group_count_part2(g)).sum();
+    println!("Hello, world! Result is : \n{:?}", sum2);
 }
