@@ -24,6 +24,12 @@ impl Borrow<String> for Bag {
     }
 }
 
+impl Borrow<str> for Bag {
+    fn borrow(&self) -> &str {
+        &self.color
+    }
+}
+
 impl Hash for Bag {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.color.hash(state);
@@ -31,7 +37,7 @@ impl Hash for Bag {
 }
 
 
-fn can_contain(bag: &Bag, color :&String, rules: &HashSet<Bag>) -> bool {
+fn can_contain(bag: &Bag, color :&str, rules: &HashSet<Bag>) -> bool {
     match bag.contents.get(color) {
         None => {
             // println!("Bag {} can't contains shiny gold, contents {:?}\n", bag.color, bag.contents);
@@ -39,6 +45,10 @@ fn can_contain(bag: &Bag, color :&String, rules: &HashSet<Bag>) -> bool {
         },
         Some(count) => true,
     }
+}
+
+fn count_contained_bags(bag: &Bag, rules: &HashSet<Bag>) -> u32 {
+    bag.contents.iter().fold(0, |acc, (color, count)| acc + count + count * count_contained_bags(rules.get(color).unwrap(), rules))
 }
 
 fn add_bag<'a>(bagset: &'a mut HashSet<Bag>, s: &str) -> Result<&'a HashSet<Bag>, &'static str> {
@@ -75,7 +85,8 @@ fn main() {
         add_bag(&mut bagset, &r).unwrap();
     }
 
-    println!("Bags are :\n {:?}", bagset);
-    println!("Bags that can contain shiny gold : {:?}", bagset.iter().map(|b| can_contain(b, &"shiny gold".to_string(), &bagset)).filter(|b| *b).count());
+    // println!("Bags are :\n {:?}", bagset);
+    println!("Bags that can contain shiny gold : {:?}", bagset.iter().map(|b| can_contain(b, "shiny gold", &bagset)).filter(|b| *b).count());
+    println!("A shiny gold bag can contain: {:?}", count_contained_bags(bagset.get("shiny gold").unwrap(), &bagset));
 
 }
