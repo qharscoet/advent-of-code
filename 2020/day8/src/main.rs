@@ -52,7 +52,7 @@ fn swap_instr(i: &Instruction) -> Instruction {
 struct Console {
     acc: i32,
     pc: usize,
-    code: Box<Vec<Instruction>>,
+    code: Vec<Instruction>,
     visited_instr: HashSet<usize>,
 }
 
@@ -63,7 +63,7 @@ enum State {
 }
 
 impl Console {
-    fn new(instr: Box<Vec<Instruction>>) -> Console {
+    fn new(instr: Vec<Instruction>) -> Console {
         Console {
             acc: 0,
             pc: 0,
@@ -106,14 +106,12 @@ impl Console {
 fn main() {
     let file = File::open("./src/input.txt").expect("Error opening the input");
     let buf_reader = BufReader::new(file);
-    let instr: Box<Vec<Instruction>> = Box::new(
-        buf_reader
-            .lines()
-            .flatten()
-            .map(|s| s.parse())
-            .flatten()
-            .collect(),
-    );
+    let instr: Vec<Instruction> = buf_reader
+        .lines()
+        .flatten()
+        .map(|s| s.parse())
+        .flatten()
+        .collect();
 
     let swappable_indexes: Vec<usize> = instr
         .iter()
