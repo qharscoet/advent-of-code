@@ -1,16 +1,18 @@
+use std::cmp::Ordering;
 use std::collections::HashSet;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 
 fn find_subarray(values: &[i64], target: i64) -> Option<&[i64]> {
-    for i in 0..values.len() {
-        let mut sum = values[i];
-        for j in i + 1..values.len() {
-            sum += values[j];
+    let mut start = 0;
+    let mut sum = values[0];
+    let mut end = 1;
 
-            if sum == target {
-                return Some(&values[i..j]);
-            }
+    while start < values.len() {
+        match sum.cmp(&target) {
+            Ordering::Less => { sum += values[end]; end += 1;}
+            Ordering::Equal => return Some(&values[start..end]),
+            Ordering::Greater => { sum -= values[start]; start += 1;}
         }
     }
     None
