@@ -5,10 +5,10 @@ use std::io::{BufRead, BufReader};
 
 fn find_subarray(values: &[i64], target: i64) -> Option<&[i64]> {
     let mut start = 0;
-    let mut sum = values[0];
-    let mut end = 1;
+    let mut end = 0;
+    let mut sum = 0;
 
-    while start < values.len() {
+    while start < values.len() && end < values.len(){
         match sum.cmp(&target) {
             Ordering::Less => { sum += values[end]; end += 1;}
             Ordering::Equal => return Some(&values[start..end]),
