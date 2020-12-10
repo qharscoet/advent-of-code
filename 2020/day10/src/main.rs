@@ -22,24 +22,24 @@ fn main() {
             _ => (one, three),
         });
 
-    let mut count = vec![0u64; (values[values.len() - 1] + 1) as usize];
+
+
+    // let count = values.iter().fold(
+    //     vec![0u64; (values.last().unwrap_or(&0) + 1) as usize],
+    //     |mut acc, &n| {
+    //         let idx = n as usize;
+    //         acc[idx] = if idx == 0 {1} else {acc[idx.saturating_sub(3)..idx].iter().sum()};
+    //         acc
+    //     },
+    // );
+
+    let mut count = vec![0u64; (values.last().unwrap_or(&0)+ 1) as usize];
     count[0] = 1;
-
-    //Multiple ifs so that the first indexes are handled....
-    for n in values {
-        let idx = n as usize;
-        if n > 0 {
-            count[idx] += count[idx - 1];
-        }
-
-        if n > 1 {
-            count[idx] += count[idx - 2];
-        }
-
-        if n > 2 {
-            count[idx] += count[idx - 3];
-        }
+    for n in &values[1..] {
+        let idx = *n as usize;
+        count[idx] = count[idx.saturating_sub(3)..idx].iter().sum();
     }
+
     println!("Hello, world! Answer is : {:?}", result);
     println!("Hello, world! Answer 2 is : {:?}", count.last());
 }
