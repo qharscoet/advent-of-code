@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 fn main() {
     const STARTING_NUMBERS : [u32; 7] =  [5, 2, 8, 16, 18, 0, 1];
-    const TURN_CNT: usize = 2020;
+    const TURN_CNT: usize = 30000000;
 
     let mut age : HashMap<u32,u32> = HashMap::new();
     let mut last_number = STARTING_NUMBERS[0];
