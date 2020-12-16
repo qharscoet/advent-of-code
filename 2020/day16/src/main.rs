@@ -1,6 +1,6 @@
 use lazy_static::lazy_static;
 use regex::Regex;
-// use std::collections::HashMap;
+use std::collections::{HashSet, HashMap};
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::ops::RangeInclusive;
@@ -32,6 +32,12 @@ impl std::str::FromStr for Rule {
     }
 }
 
+impl Rule {
+    fn valid_value(&self, v:&u32) -> bool {
+        self.ranges.0.contains(v) || self.ranges.1.contains(v)
+    }
+}
+
 type Ticket = Vec<u32>;
 
 
@@ -43,11 +49,15 @@ fn parse_ticket(s: &str) -> Result<Ticket, &'static str> {
 }
 
 fn ticket_error_values(t: &[u32], rules : &[Rule] ) -> Vec<u32> {
-    t.iter().filter(|val| rules.iter().all(|r| !r.ranges.0.contains(val) && !r.ranges.1.contains(val))).cloned().collect()
+    t.iter().filter(|val| rules.iter().all(|r| !r.valid_value(val))).cloned().collect()
 }
 
 fn error_rate(tickets: &[Ticket], rules: &[Rule] ) -> u32 {
     tickets.iter().flat_map(|t| ticket_error_values(t, rules)).sum()
+}
+
+fn value_can_be_rule(tickets: &[Ticket], i:usize, r : &Rule) -> bool {
+    tickets.iter().map(|t| t[i]).all(|v| r.valid_value(&v))
 }
 
 
@@ -58,16 +68,50 @@ fn main() {
     let rules: Vec<Rule> = lines
         .by_ref()
         .take_while(|s| s != "your ticket:")
-        .map(|s| s.parse())
-        .flatten()
+        .flat_map(|s| s.parse())
         .collect();
 
     let tickets: Vec<Ticket> = lines
-        .skip_while(|s| s != "nearby tickets:")
+        // .skip_while(|s| s != "nearby tickets:")
         .flat_map(|s| parse_ticket(&s))
         .collect();
 
     let result = error_rate(&tickets, &rules);
+    println!("Hello, world! Part 1 is  {}", result);
 
-    println!("Hello, world! {:?}", result);
+     let valid_tickets: Vec<Ticket> = tickets
+        .iter()
+        .filter(|t| ticket_error_values(t, &rules).len() == 0)
+        .cloned()
+        .collect();
+
+    let mut rule_index: HashMap<&String, usize> = HashMap::new();
+    let mut remaining_indexes: HashSet<usize> = (0..rules.len()).collect();
+
+    while rule_index.len() < rules.len() {
+        let mut index_to_remove = 0;
+        for &i in &remaining_indexes {
+            let possible_rules: Vec<&String> = rules
+                .iter()
+                .filter(|&r|  !rule_index.contains_key(&r.name) && value_can_be_rule(&valid_tickets, i, r))
+                .map(|r| &r.name)
+                .collect();
+
+            if possible_rules.len() == 1 {
+                rule_index.insert(possible_rules[0], i);
+                index_to_remove = i;
+            }
+        }
+        remaining_indexes.remove(&index_to_remove);
+    }
+
+    let my_ticket = &tickets[0];
+    let product = rule_index
+        .iter()
+        .filter(|(k, _v)| k.starts_with("departure"))
+        .map(|(_k, &v)| my_ticket[v] as u64)
+        .product::<u64>();
+
+    dbg!(rule_index);
+    println!("Hello, world! Part 2 is {}", product);
 }
