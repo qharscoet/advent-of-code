@@ -34,6 +34,14 @@ impl std::str::FromStr for Rule {
 
 type Ticket = Vec<u32>;
 
+
+fn parse_ticket(s: &str) -> Result<Ticket, &'static str> {
+    s.split(',').try_fold(Vec::new(), |mut acc, n| {
+        acc.push(n.parse::<u32>().map_err(|_| "error parsing")?);
+        Ok(acc)
+    })
+}
+
 fn ticket_error_values(t: &[u32], rules : &[Rule] ) -> Vec<u32> {
     t.iter().filter(|val| rules.iter().all(|r| !r.ranges.0.contains(val) && !r.ranges.1.contains(val))).cloned().collect()
 }
@@ -56,16 +64,10 @@ fn main() {
 
     let tickets: Vec<Ticket> = lines
         .skip_while(|s| s != "nearby tickets:")
-        .skip(1) //skip_while does not consume the nearby tickets string
-        .map(|s| {
-            s.split(',')
-                .map(|n| n.parse::<u32>().unwrap_or_default())
-                .collect()
-        })
+        .flat_map(|s| parse_ticket(&s))
         .collect();
 
     let result = error_rate(&tickets, &rules);
-    // let range = 0..=10;
 
     println!("Hello, world! {:?}", result);
 }
