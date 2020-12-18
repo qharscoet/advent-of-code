@@ -2,7 +2,7 @@ use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::str::Chars;
 
-fn compute_chars(chars: &mut Chars) -> u64 {
+fn compute_chars(chars: &mut std::iter::Peekable<Chars>, is_product : bool) -> u64 {
     let mut res = 0;
     let mut last_op: char = ' ';
 
@@ -16,10 +16,16 @@ fn compute_chars(chars: &mut Chars) -> u64 {
     }
 
     loop {
+        if let Some(')') = chars.peek() {
+            if is_product {
+                return res;
+            }
+        }
         match chars.next() {
             Some(c) => match c {
-                '+' | '*' => last_op = c,
-                '(' => res = apply_op(res, last_op, compute_chars(chars)),
+                '+' => last_op = c,
+                '*' => res *= compute_chars(chars, true),
+                '(' => res = apply_op(res, last_op, compute_chars(chars, false)),
                 ')' => return res,
                 '0'..='9' => res = apply_op(res, last_op, c.to_digit(10).unwrap_or_default() as u64),
                 _ => {}
@@ -31,8 +37,8 @@ fn compute_chars(chars: &mut Chars) -> u64 {
 }
 
 fn compute_line(s: &str) -> u64 {
-    let mut chars = s.chars();
-    compute_chars(&mut chars)
+    let mut chars = s.chars().peekable();
+    compute_chars(&mut chars, false)
 }
 
 fn main() {
