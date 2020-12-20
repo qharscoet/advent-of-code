@@ -53,19 +53,90 @@ impl std::str::FromStr for Rule {
     }
 }
 
-fn match_rule(chars:&mut Chars, rules: &HashMap<u32, Rule>, idx:u32) -> bool {
+fn match_rule_loop(chars: &mut Chars, rules: &HashMap<u32, Rule>, idx: u32, max:u32) -> u32 {
+
     match &rules[&idx].args {
-        RuleArg::Letter(c) => chars.next().unwrap_or_default() == *c,
-        RuleArg::SubRule(subrules) => subrules.iter().any(|subrule| {
+        RuleArg::Letter(c) => (chars.next().unwrap_or_default() == *c) as u32,
+        RuleArg::SubRule(subrules) => {
+            let subrule =  &subrules[0];
+            let mut  matched = false;
             let mut my_chars = chars.clone();
-            if subrule.iter().all(|&r| match_rule(&mut my_chars, rules, r)) {
-                //if it's true we propagate the remaining chars to the upper call
+            let mut count = 0;
+            while count < max  && subrule.iter().all(|&r| match_rule(&mut my_chars, rules, r))
+            {
+                count +=1;
+                matched = true;
+            }
+
+            if matched {
+                *chars = my_chars.clone();
+            }
+
+            count
+        }
+    }
+}
+
+fn match_rule_same_number(chars: &mut Chars, rules: &HashMap<u32, Rule>, idx: u32) -> bool
+{
+     match &rules[&idx].args {
+        RuleArg::Letter(c) => chars.next().unwrap_or_default() == *c,
+        RuleArg::SubRule(subrules) => {
+            let subrule =  &subrules[0];
+            let mut count = 0;
+            let mut matched_once = false;
+            let mut my_chars = chars.clone();
+            while match_rule(&mut my_chars, &rules, subrule[0]) {
+                matched_once = true;
+                count += 1;
+            }
+            while match_rule(&mut my_chars, &rules, subrule[1]) {
+                count -= 1;
+            }
+
+            if count == 0 && matched_once {
                 *chars = my_chars.clone();
                 true
             } else {
                 false
             }
-        })
+        }
+    }
+}
+
+fn match_rule(chars:&mut Chars, rules: &HashMap<u32, Rule>, idx:u32) -> bool {
+    match idx {
+        0 => {
+            let mut current = 1;
+            loop {
+                let mut my_chars = chars.clone();
+                if match_rule_loop(&mut my_chars, rules, 8, current) == current {
+                    if match_rule_same_number(&mut my_chars, rules, 11){
+                        *chars = my_chars.clone();
+                        return true;
+                    } else {
+                        current += 1;
+                    }
+                } else {
+                    return false;
+                }
+            }
+        },
+        8 => match_rule_loop(chars, rules, 8, std::u32::MAX) > 0,
+        11 => match_rule_same_number(chars, rules, 11),
+        _ => match &rules[&idx].args {
+                RuleArg::Letter(c) => chars.next().unwrap_or_default() == *c,
+                RuleArg::SubRule(subrules) => subrules.iter().any(|subrule| {
+                    let mut my_chars = chars.clone();
+                    if subrule.iter().all(|&r| match_rule(&mut my_chars, rules, r)) {
+                        //if it's true we propagate the remaining chars to the upper call
+                        *chars = my_chars.clone();
+                        true
+                    } else {
+                        false
+                    }
+                })
+            }
     }
 }
 
