@@ -3,6 +3,7 @@ use regex::Regex;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
+use std::str::Chars;
 
 #[derive(Debug)]
 enum RuleArg {
@@ -52,8 +53,30 @@ impl std::str::FromStr for Rule {
     }
 }
 
-fn match_rule(rules: &HashMap<u32, Rule>, idx:u32) -> bool {
-    false
+fn match_rule(chars:&mut Chars, rules: &HashMap<u32, Rule>, idx:u32) -> bool {
+    match &rules[&idx].args {
+        RuleArg::Letter(c) => chars.next().unwrap_or_default() == *c,
+        RuleArg::SubRule(subrules) => subrules.iter().any(|subrule| {
+            let mut my_chars = chars.clone();
+            if subrule.iter().all(|&r| match_rule(&mut my_chars, rules, r)) {
+                //if it's true we propagate the remaining chars to the upper call
+                *chars = my_chars.clone();
+                true
+            } else {
+                false
+            }
+        })
+    }
+}
+
+fn match_rule_start(s:&str, rules: &HashMap<u32, Rule>, idx:u32 ) -> bool {
+    let mut chars = s.chars();
+    let result = match_rule(&mut chars, rules, idx);
+    match chars.next() {
+        Some(_) => false,
+        None => result
+    }
+
 }
 
 fn main() {
@@ -61,6 +84,7 @@ fn main() {
     let buf_reader = BufReader::new(file);
     let mut lines = buf_reader.lines().flatten();
     let rules: HashMap<u32, Rule> = lines
+        .by_ref()
         .take_while(|s| s != "")
         .map(|s| {
             let rule: Rule = s.parse().unwrap();
@@ -68,5 +92,6 @@ fn main() {
         })
         .collect();
 
-    println!("Hello, world!");
+    let count = lines.filter(|s| match_rule_start(s, &rules, 0)).count();
+    println!("Hello, world! Part 1 is {}", count);
 }
