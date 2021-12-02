@@ -1,9 +1,15 @@
 mod solutions;
-use solutions::*;
-use solution::Solution;
+
+use chrono::{Datelike, Utc};
 
 mod solution;
 
 fn main() {
-    day1::Day1.solve(1);
+    let args: Vec<String> = std::env::args().collect();
+    let day: u32 = match args.len() {
+        2 => args[0].trim().parse().expect("Not a number"),
+        _ => Utc::now().day()
+    };
+
+    solutions::run(day);
 }
