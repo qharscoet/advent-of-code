@@ -45,8 +45,14 @@ impl Solution for Day2 {
 
         pos * depth
     }
-    fn second_part(&self, _input: &Self::Input) -> u32 {
-        42
+    fn second_part(&self, input: &Self::Input) -> u32 {
+        let (pos, depth, _aim) = input.iter().fold((0,0,0), |(pos, depth, aim), a| match a {
+            Action::Forward(v) => (pos + v, depth + aim *v, aim),
+            Action::Up(v) => (pos, depth, aim - v),
+            Action::Down(v) => (pos, depth, aim + v),
+        });
+
+        pos * depth
     }
 }
 
@@ -74,6 +80,18 @@ mod tests {
 
     #[test]
     fn test_second_part() {
-        panic!()
+         let strings: Vec<String> = vec![
+            "forward 5",
+            "down 5",
+            "forward 8",
+            "up 3",
+            "down 8",
+            "forward 2",
+        ]
+        .iter()
+        .map(|s| s.to_string())
+        .collect();
+        let input = Day2.parse_input(strings.into_iter());
+        assert_eq!(Day2.second_part(&input), 900);
     }
 }
