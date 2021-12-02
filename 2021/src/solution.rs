@@ -1,5 +1,5 @@
 use std::fs::File;
-use std::io::{self, BufReader};
+use std::io::{self, BufReader, BufRead};
 use std::path::Path;
 
 fn input_file(day: i32) -> String {
@@ -8,14 +8,14 @@ fn input_file(day: i32) -> String {
 
 pub trait Solution {
     type Input;
-    fn parse_input(&self, r: BufReader<File>) -> Self::Input;
-    fn first_part(&self, input: &Self::Input) -> i32;
-    fn second_part(&self, input: &Self::Input) -> i32;
+    fn parse_input(&self, r : impl Iterator<Item=std::string::String>) -> Self::Input;
+    fn first_part(&self, input: &Self::Input) -> u32;
+    fn second_part(&self, input: &Self::Input) -> u32;
 
     fn load_input<P: AsRef<Path>>(&self, p: P) -> io::Result<Self::Input> {
         let file = File::open(p)?;
         let buf_reader = BufReader::new(file);
-        Ok(self.parse_input(buf_reader))
+        Ok(self.parse_input(buf_reader.lines().flatten()))
     }
 
     fn solve(&self, day: i32) {
