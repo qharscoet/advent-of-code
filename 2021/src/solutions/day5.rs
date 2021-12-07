@@ -18,7 +18,7 @@ fn parse_line(diagram: &mut Diagram, line:&str) {
 
     /* !!! UNCOMMENT FOR PART 1  !!!*/
     // if x1 != x2 && y1 != y2 {return;}
-    
+
     //points as i32 so that we can substract and get neg distance
     let (x1, y1) = (x1 as i32, y1 as i32);
     let (x2, y2) = (x2 as i32, y2 as i32);
@@ -44,6 +44,7 @@ fn parse_line(diagram: &mut Diagram, line:&str) {
 
 impl Solution for Day5 {
     type Input = Diagram;
+    type ReturnType = u32;
 
     fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
         let mut diagram : Diagram = Diagram::new();
@@ -71,18 +72,18 @@ mod tests {
     fn display(diagram: &Diagram) {
         let xmax = diagram.keys().max_by_key(|(x,_y)| x).unwrap().0;
         let ymax = diagram.keys().max_by_key(|(_x,y)| y).unwrap().1;
-    
+
         println!("{:?}", diagram);
         println!("{:?}", xmax);
         println!("{:?}", ymax);
-    
+
         for y in 0..=ymax {
             for x in 0..=xmax {
                 print!("{}", if diagram.contains_key(&(x,y)) {(*diagram.get(&(x,y)).unwrap_or(&0) + 48u8) as char} else {'.'});
             }
-    
+
             print!("\n");
-            
+
         }
     }
 

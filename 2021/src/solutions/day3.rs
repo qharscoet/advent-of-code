@@ -30,6 +30,7 @@ fn select_by_criteria(values: &Vec<Vec<char>>,  f: fn(usize, usize) -> bool ) ->
 
 impl Solution for Day3 {
     type Input = Vec<Vec<char>>;
+    type ReturnType = u32;
 
     fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
         lines

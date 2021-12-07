@@ -4,6 +4,7 @@ pub struct Day1;
 
 impl Solution for Day1 {
     type Input = Vec<i32>;
+    type ReturnType = u32;
 
     fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
         lines

@@ -1,6 +1,7 @@
 use std::fs::File;
 use std::io::{self, BufReader, BufRead};
 use std::path::Path;
+use std::fmt::Display;
 
 fn input_file(day: i32) -> String {
     format!("./src/inputs/day{}.txt", day)
@@ -8,9 +9,11 @@ fn input_file(day: i32) -> String {
 
 pub trait Solution {
     type Input;
+    type ReturnType: Display;
+
     fn parse_input(&self, r : impl Iterator<Item=std::string::String>) -> Self::Input;
-    fn first_part(&self, input: &Self::Input) -> u32;
-    fn second_part(&self, input: &Self::Input) -> u32;
+    fn first_part(&self, input: &Self::Input) -> Self::ReturnType;
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType;
 
     fn load_input<P: AsRef<Path>>(&self, p: P) -> io::Result<Self::Input> {
         let file = File::open(p)?;

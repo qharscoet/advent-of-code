@@ -31,6 +31,7 @@ impl std::str::FromStr for Action {
 
 impl Solution for Day2 {
     type Input = Vec<Action>;
+    type ReturnType = u32;
 
     fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
         lines.flat_map(|line| line.parse()).collect()
