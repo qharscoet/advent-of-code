@@ -1,10 +1,9 @@
 use crate::solution::Solution;
 
-// use ndarray::{arr2, Array2};
-use nalgebra::SMatrix;
 
 pub struct Day6;
 
+use nalgebra::SMatrix;
 type Matrix9x9 = SMatrix<u64, 9, 9>;
 type Matrix1x9 = SMatrix<u64, 1, 9>;
 
