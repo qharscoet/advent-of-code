@@ -18,6 +18,35 @@ pub struct Paper {
 
 }
 
+fn display(diagram: &Diagram) {
+    let xmax = diagram.iter().max_by_key(|(x,_y)| x).unwrap().0;
+    let ymax = diagram.iter().max_by_key(|(_x,y)| y).unwrap().1;
+
+    println!("{:?}", diagram);
+    println!("{:?}", xmax);
+    println!("{:?}", ymax);
+
+    for y in 0..=ymax {
+        for x in 0..=xmax {
+            print!("{}", if diagram.contains(&(x,y)) {'#'} else {' '});
+        }
+        print!("\n");
+    }
+}
+
+fn fold_diagram( diagram : &mut Diagram, fold : &Fold) {
+    let positions : Vec<((u32,u32), (u32,u32))> = diagram.iter().filter_map(|(x,y)| match fold {
+        Fold::Horizontal(v) => {if x > v {Some( ((*x,*y), (v - (x - v), *y)) )} else {None}},
+        Fold::Vertical(v) => { if y > v {Some( ((*x,*y), (*x, v - (y - v)))) } else {None}}
+    }).collect();
+
+    for (old_pos, new_pos) in positions {
+        diagram.remove(&old_pos);
+        diagram.insert(new_pos);
+    }
+    
+}
+
 impl Solution for Day13 {
     type Input = Paper;
     type ReturnType = u32;
@@ -53,22 +82,19 @@ impl Solution for Day13 {
         let mut paper = input.clone();
         let first_fold = &paper.folds[0];
 
-        let positions : Vec<((u32,u32), (u32,u32))> = paper.diagram.iter().filter_map(|(x,y)| match first_fold {
-            Fold::Horizontal(v) => {if x > v {Some( ((*x,*y), (v - (x - v), *y)) )} else {None}},
-            Fold::Vertical(v) => { if y > v {Some( ((*x,*y), (*x, v - (y - v)))) } else {None}}
-        }).collect();
-
-        for (old_pos, new_pos) in positions {
-            paper.diagram.remove(&old_pos);
-            paper.diagram.insert(new_pos);
-        }
-        
+        fold_diagram(&mut paper.diagram, &first_fold);
         
         paper.diagram.len() as u32
     }
 
-    fn second_part(&self, _input: &Self::Input) -> u32 {
-        0
+    fn second_part(&self, input: &Self::Input) -> u32 {
+        let mut paper = input.clone();
+        for fold in &input.folds {
+            fold_diagram(&mut paper.diagram, fold);
+        }
+
+        display(&paper.diagram);
+        paper.diagram.len() as u32
     }
 }
 
