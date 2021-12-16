@@ -4,7 +4,7 @@ pub struct Day16;
 
 #[derive(Debug, PartialEq)]
 struct LiteralData{
-    value : u32
+    value : u64
 }
 
 #[derive(Debug,PartialEq)]
@@ -66,7 +66,7 @@ impl std::str::FromStr for LiteralData {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let chunks= s.as_bytes().chunks(5);
 
-        let value = u32::from_str_radix(&chunks.fold("".to_string(), |acc, bits| {
+        let value = u64::from_str_radix(&chunks.fold("".to_string(), |acc, bits| {
             acc + &bits[1..5].iter().map(|&v| v as char).collect::<String>()
         }), 2).unwrap_or_default();
 
@@ -87,9 +87,7 @@ impl std::str::FromStr for OperatorData {
                 length = 15 + total_length as usize;
                 let mut curr_length = 0;
                 let mut subpackets_str : String = chars.collect();
-                println!("length mode 0, waiting for {:?} bits", total_length);
                 while curr_length != total_length {
-                    println!("\t subpacker str {:?}", subpackets_str );
                     let packet = subpackets_str.parse::<Packet>().unwrap();
                     subpackets_str = subpackets_str[packet.length..subpackets_str.len()].to_string();
                     curr_length += packet.length as u16;
@@ -134,12 +132,11 @@ impl std::str::FromStr for Packet {
         };
 
         let mut raw_data : String = bits.collect();
-        let mut length = raw_data.len();
+        let mut length = 0;
 
         let data : PacketData = match type_id {
             4 => {
                 let nb_chunks = raw_data.chars().step_by(5).take_while(|&c| c == '1' ).count() + 1;
-                println!("nb_chunks : {:?}", nb_chunks);
                 let value_str = raw_data.chars().take(nb_chunks * 5).collect::<String>();
                 length = nb_chunks*5;
                 PacketData::Literal(value_str.parse::<LiteralData>().unwrap())},
@@ -160,7 +157,7 @@ impl std::str::FromStr for Packet {
 
 impl Solution for Day16 {
     type Input = Packet;
-    type ReturnType = u32;
+    type ReturnType = u64;
 
     fn parse_input(&self, mut lines: impl Iterator<Item = std::string::String>) -> Self::Input {
         let hex= lines.next().unwrap_or_default();
@@ -169,14 +166,14 @@ impl Solution for Day16 {
         binary.parse().unwrap()
     }
 
-    fn first_part(&self, input: &Self::Input) -> u32 {
+    fn first_part(&self, input: &Self::Input) -> u64 {
         let packet = input.clone();
 
-        fn get_packet_version_sum(packet:&Packet) -> u32 {
+        fn get_packet_version_sum(packet:&Packet) -> u64 {
             match &packet.data {
-                PacketData::Literal(_) => {packet.version as u32},
+                PacketData::Literal(_) => {packet.version as u64},
                 PacketData::Operator(data) => {
-                    packet.version as u32 + data.subpackets.iter().fold(0, |acc, subpacket| acc + get_packet_version_sum(subpacket))
+                    packet.version as u64 + data.subpackets.iter().fold(0, |acc, subpacket| acc + get_packet_version_sum(subpacket))
                 }
             }
         }
@@ -184,8 +181,32 @@ impl Solution for Day16 {
         get_packet_version_sum(packet)
     }
 
-    fn second_part(&self, _input: &Self::Input) -> u32 {
-        0
+    fn second_part(&self, input: &Self::Input) -> u64 {
+        let packet = input.clone();
+
+        fn get_packet_value(packet:&Packet) -> u64 {
+            match packet.type_id {
+                4 => if let PacketData::Literal(data) = &packet.data {data.value} else {0}
+                _ => {
+                    if let PacketData::Operator(data) = &packet.data {
+                        let subpacket_values: Vec<u64> = data.subpackets.iter().map(|subpacket| get_packet_value(subpacket)).collect();
+                        match packet.type_id {
+                            0 => subpacket_values.iter().sum(),
+                            1 => subpacket_values.iter().product(),
+                            2 => *subpacket_values.iter().min().unwrap(),
+                            3 => *subpacket_values.iter().max().unwrap(),
+                            5 => (subpacket_values[0] > subpacket_values[1]) as u64,
+                            6 => (subpacket_values[0] < subpacket_values[1]) as u64,
+                            7 => (subpacket_values[0] == subpacket_values[1]) as u64,
+                            _ => 0,
+                        }
+                    } else {
+                        0
+                    }
+                }
+            }
+        }
+       get_packet_value(packet)
     }
 }
 
@@ -193,17 +214,6 @@ impl Solution for Day16 {
 mod tests {
     use super::*;
     use crate::solution::Solution;
-
-    fn test_input_to_string_iter() -> Vec<Vec<String>> {
-        vec![
-            vec!["D2FE28".to_string()],
-            vec!["38006F45291200".to_string()],
-            vec!["8A004A801A8002F478".to_string()],
-            vec!["620080001611562C8802118E34".to_string()],
-            vec!["C0015000016115A2E0802F182340".to_string()],
-            vec!["A0016C880162017C3686B18A3D4780".to_string()]
-        ]
-    }
 
     #[test]
     fn test_parse_literal() {
@@ -315,9 +325,10 @@ mod tests {
             vec!["9C005AC2F8F0".to_string()],
             vec!["9C0141080250320F1802104A08".to_string()],
         ];
-        let test_results : Vec<<crate::solutions::day16::Day16 as Solution>::ReturnType> = vec![3, 54, 7,9,1,0, 1];
+        let test_results : Vec<<crate::solutions::day16::Day16 as Solution>::ReturnType> = vec![3, 54, 7,9,1,0, 0, 1];
 
         for (value, result) in test_values.into_iter().zip(test_results.iter()) {
+            println!("{:?} VS {:?}", value, result);
             let input = Day16.parse_input(value.into_iter());
             assert_eq!(Day16.second_part(&input), *result)
         }
