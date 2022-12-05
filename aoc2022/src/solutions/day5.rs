@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::solution::Solution;
 
 pub struct Day5;
@@ -45,6 +43,17 @@ impl Docks {
             }
         }
     }
+
+    fn apply_rules_cratemover9001(&mut self) {
+        for r in &self.rules {
+            let len = self.storage[r.from_stack].len();
+            let count = r.count as usize;
+
+            //Could use extend to go from the drain iter to the other vec without collecting, but borrow_checker is a bitch
+            let mut removed = self.storage[r.from_stack].drain(len-count..).collect();
+            self.storage[r.to_stack].append(&mut removed);
+        }
+    }
 }
 
 impl Solution for Day5 {
@@ -55,7 +64,7 @@ impl Solution for Day5 {
         let crate_lines : Vec<String> = lines.by_ref().take_while(|l| !l.is_empty()).collect();
         let mut rev_crate_lines = crate_lines.iter().rev();
         let count = rev_crate_lines.next().map(|s| s.split("   ").last().expect("Can't split").trim().parse::<u32>().expect("is not a number")).unwrap_or_default() as usize;
-        
+
         // getting our n empty stacks of crates
         let mut storage : Storage = vec![];
         storage.resize(count, Vec::new());
@@ -79,11 +88,14 @@ impl Solution for Day5 {
     fn first_part(&self, input: &Self::Input) -> String {
         let mut input_copy = input.clone();
         input_copy.apply_rules();
-        
+
         input_copy.storage.iter().flat_map(|stack| stack.last()).collect()
     }
     fn second_part(&self, input: &Self::Input) -> String {
-        "".to_string()
+        let mut input_copy = input.clone();
+        input_copy.apply_rules_cratemover9001();
+
+        input_copy.storage.iter().flat_map(|stack| stack.last()).collect()
     }
 }
 
@@ -96,7 +108,7 @@ mod tests {
 "    [D]    
 [N] [C]    
 [Z] [M] [P]
- 1   2   3 
+ 1   2   3
 
 move 1 from 2 to 1
 move 3 from 1 to 3
@@ -116,6 +128,6 @@ move 1 from 1 to 2";
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day5.parse_input(lines);
 		assert_eq!(Day5.second_part(&input),
-            "CMZ")
+            "MCD")
     }
 }
