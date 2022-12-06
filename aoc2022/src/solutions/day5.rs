@@ -65,8 +65,10 @@ impl Solution for Day5 {
         let mut rev_crate_lines = crate_lines.iter().rev();
         let count = rev_crate_lines.next().map(|s| s.split("   ").last().expect("Can't split").trim().parse::<u32>().expect("is not a number")).unwrap_or_default() as usize;
 
-        // getting our n empty stacks of crates
-        let mut storage : Storage = vec![];
+        /* Classic more imperative style */
+        
+        //getting our n empty stacks of crates
+        let mut storage : Storage = Vec::new();
         storage.resize(count, Vec::new());
 
         // Stacking them up, chunk is either 4 spaces or '[N] '
@@ -77,6 +79,14 @@ impl Solution for Day5 {
                 }
             }
         }
+        
+        /* Functional style for reference*/
+        // let storage = rev_crate_lines.fold(vec![vec![];count], |mut acc, l| {
+        //     l.chars().collect::<Vec<char>>().chunks(4) // Getting chunks of 4 chars
+        //         .enumerate().filter(|(_,chunk)| chunk[0] != ' ') // filtering the not empty ones
+        //         .for_each(|(idx,chunk)| acc[idx].push(chunk[1])); //Add value to stack
+        //     acc
+        // });
 
         let rules : Vec<Rule> = lines.flat_map(|l| l.parse()).collect();
         Docks {
