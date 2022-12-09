@@ -1,8 +1,9 @@
-use std::{rc::Rc, cell::{RefCell}};
+use std::{rc::Rc, cell::{RefCell}, collections::{HashMap}, vec};
 
 use crate::solution::Solution;
 
 pub struct Day7;
+pub struct Day7Other;
 
 #[derive(Debug)]
 pub enum Element {
@@ -126,9 +127,72 @@ impl Solution for Day7 {
 	}
 }
 
+
+impl Solution for Day7Other {
+    type Input = HashMap<String, usize>;
+    type ReturnType = usize;
+
+    fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
+        let mut dirsizes : HashMap<String, usize> = HashMap::new();
+        let mut current_path : Vec<String> = vec![];
+        dirsizes.insert("/".to_string(), 0);
+        
+        let mut iter = lines.peekable();
+    
+        loop {
+            if let Some(l) = iter.next()  {
+                match &l[2..=3]{
+                    "ls" => {
+                        while let Some(val) = iter.next_if(|w| !w.starts_with("$")) {
+                             if let Some((l,r)) = val.split_once(' ') {
+                                match l {
+                                    "dir" => {dirsizes.insert(r.to_string(), 0);},
+                                    _ => {current_path.iter().for_each(|s| 
+                                            { dirsizes.entry(s.to_string()).and_modify(|v| *v += l.parse::<usize>().unwrap_or_default()).or_insert(0);}
+                                    )}
+                                };
+                            }
+                        }
+                    },
+                    "cd" => {
+                        match &l[5..] {
+                            "/" => { current_path = vec!["/".to_string()];}
+                            ".." => { current_path.pop();},
+                            dirname => {current_path.push(dirname.to_string());}
+                        }
+                    },
+                    _ => {}
+                }
+            }
+            else {
+                break;
+            }
+            
+        }
+        
+        
+        println!("{:#?}", dirsizes);
+
+        dirsizes
+    }
+
+    fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
+        input.iter().filter(|(_dir, &size)| size < 100000 ).map(|(_k,v)| v).sum()
+	}
+    
+    
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
+       let unused_space = 70000000 - input.get(&"/".to_string()).unwrap_or(&0);
+       let needed_space = 30000000 - unused_space;
+       input.iter().filter(|(_dir, &size)| size > needed_space ).map(|(_k,v)| *v).min().unwrap_or_default()
+	}
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::Day7;
+    use super::Day7Other;
     use crate::solution::Solution;
 
 		static INPUT_TEST : &str =
@@ -176,6 +240,30 @@ $ ls
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day7.parse_input(lines);
 		assert_eq!(Day7.second_part(&input),
+            24933642)
+    }
+    
+    #[test]
+    fn test_parse_other() {
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
+        let input = Day7Other.parse_input(lines);
+        let root_size = input.get(&"/".to_string()).unwrap_or(&0);
+        assert_eq!(*root_size, 48381165);
+    }
+
+    #[test]
+    fn test_first_part_other() {
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
+        let input = Day7Other.parse_input(lines);
+		assert_eq!(Day7Other.first_part(&input),
+        95437)
+    }
+
+    #[test]
+    fn test_second_part_other() {
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
+        let input = Day7Other.parse_input(lines);
+		assert_eq!(Day7Other.second_part(&input),
             24933642)
     }
 }
