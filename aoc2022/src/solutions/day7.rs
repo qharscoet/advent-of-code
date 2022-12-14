@@ -146,9 +146,12 @@ impl Solution for Day7Other {
                         while let Some(val) = iter.next_if(|w| !w.starts_with("$")) {
                              if let Some((l,r)) = val.split_once(' ') {
                                 match l {
-                                    "dir" => {dirsizes.insert(r.to_string(), 0);},
-                                    _ => {current_path.iter().for_each(|s| 
-                                            { dirsizes.entry(s.to_string()).and_modify(|v| *v += l.parse::<usize>().unwrap_or_default()).or_insert(0);}
+                                    "dir" => {},
+                                    _ => {current_path.iter().enumerate().for_each(|(i,_)| 
+                                            { 
+                                                let val = l.parse::<usize>().unwrap_or_default();
+                                                let s = if i==0  {"/".to_string()} else {current_path[..(i+1)].join("/")[1..].to_string()};
+                                                dirsizes.entry(s).and_modify(|v| *v += val).or_insert(val);}
                                     )}
                                 };
                             }
