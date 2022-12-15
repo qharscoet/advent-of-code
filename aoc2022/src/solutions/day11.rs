@@ -1,4 +1,4 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque};
 
 use crate::solution::Solution;
 
@@ -12,34 +12,38 @@ enum Operation {
 
 #[derive(Debug, Clone)]
 pub struct Monkey {
-	items : VecDeque<u32>,
+	items : VecDeque<u64>,
 	op : Option<Operation>,
-	test : u32, //The value tested for divisible
+	test : u64, //The value tested for divisible
 	if_true : usize,
 	if_false : usize, //both are monkeys index;
-	total_inspects : u32,
+	total_inspects : u64,
 }
 
-fn monkey_round(monkeys:&mut Vec<Monkey>) {
+fn monkey_round(monkeys:&mut Vec<Monkey>, p2 : bool) {
 	for idx in 0..monkeys.len() {
 		while let Some(item) = monkeys[idx].items.pop_front() {
 			monkeys[idx].total_inspects += 1;
 			let mut worry = item;
 			if let Some(op) = &monkeys[idx].op {
 				match op {
-					Operation::Add(v) => worry += if *v == 0 { worry} else {*v},
-					Operation::Multiply(v) => worry *= if *v == 0 { worry} else {*v},
+					Operation::Add(v) => worry += if *v == 0 { worry} else {*v as u64},
+					Operation::Multiply(v) => worry *= if *v == 0 { worry} else {*v as u64},
 				}
 			}
-			
-			worry /= 3;
-			
-			
-			
+
+			if p2 {
+				let product_prime :u64 = monkeys.iter().map(|m| m.test).product();
+				worry %= product_prime;
+			} else {
+				worry /= 3;
+			}
+
 			if worry%monkeys[idx].test == 0 {
+				
 				let true_idx = monkeys[idx].if_true;
 				monkeys[true_idx].items.push_back(worry);
-			} else {
+			} else {	
 				let false_idx = monkeys[idx].if_false;
 				monkeys[false_idx].items.push_back(worry);
 			}
@@ -50,7 +54,7 @@ fn monkey_round(monkeys:&mut Vec<Monkey>) {
 
 impl Solution for Day11 {
     type Input = Vec<Monkey>;
-    type ReturnType = u32;
+    type ReturnType = u64;
 	
 	/*
 	Monkey 0:
@@ -83,15 +87,20 @@ impl Solution for Day11 {
     fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
 		let mut monkeys_copy = input.clone();
 		for _ in 0..20 {
-			monkey_round(&mut monkeys_copy);
+			monkey_round(&mut monkeys_copy, false);
 		}
-		println!("{:#?}", monkeys_copy);
 		let mut inspects : Vec<_> = monkeys_copy.iter().map(|m| m.total_inspects).collect();
 		inspects.sort();
 		inspects.iter().rev().take(2).product()
 	}
     fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
-		42
+		let mut monkeys_copy = input.clone();
+		for _ in 0..10000 {
+			monkey_round(&mut monkeys_copy, true);
+		}
+		let mut inspects : Vec<_> = monkeys_copy.iter().map(|m| m.total_inspects).collect();
+		inspects.sort();
+		inspects.iter().rev().take(2).product()
 	}
 }
 
@@ -142,6 +151,6 @@ Monkey 3:
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day11.parse_input(lines);
 		assert_eq!(Day11.second_part(&input),
-            0)
+		2713310158)
     }
 }
