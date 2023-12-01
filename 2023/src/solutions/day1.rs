@@ -49,6 +49,33 @@ impl Solution for Day1 {
     }
 }
 
+#[allow(dead_code)]
+impl Day1 {
+
+    //Rust implem from https://github.com/jonathanpaulson 's solution from the leaderboard, did not think of it at first...
+    fn second_part_opti(&self, input : &<Day1 as Solution>::Input) -> u32 {
+        input.iter().map(|line| {
+            let digit_strings = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+
+            let digits = line.chars().enumerate().fold(Vec::new(), |mut acc, (idx, c)| {
+                if c.is_ascii_digit() {
+                    acc.push(c.to_digit(10).unwrap_or_default());
+                } 
+
+                for (d, str) in digit_strings.iter().enumerate() {
+                        if line[idx..].starts_with(str){
+                            acc.push((d +1 ) as u32);
+                        }
+                }
+
+                acc 
+            });
+
+            digits.first().unwrap() * 10 + digits.last().unwrap()
+        }).sum()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::Day1;
@@ -78,6 +105,7 @@ zoneight234
     fn test_second_part() {
         let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
         let input = Day1.parse_input(lines);
-        assert_eq!(Day1.second_part(&input), 281)
+        assert_eq!(Day1.second_part(&input), 281);
+        assert_eq!(Day1.second_part_opti(&input), 281);
     }
 }
