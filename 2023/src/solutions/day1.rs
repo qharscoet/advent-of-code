@@ -15,6 +15,7 @@ fn digit_str_to_u32(s:&str) -> u32
         "seven" => 7,
         "eight" => 8,
         "nine" => 9,
+        "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => s.parse().unwrap_or_default(),
         _ => 0
     }
 }
@@ -37,16 +38,11 @@ impl Solution for Day1 {
     }
     fn second_part(&self, input: &Self::Input) -> u32 {
         input.iter().map(|line| {
-            let digit_strings = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine"];
+            //Ugly, having a map and merging key and values may be cleaner
+            let digit_strings = ["one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "1" , "2" , "3" , "4" , "5" , "6" , "7" , "8" , "9" ];
 
-            let first_str_digit = digit_strings.iter().map(|digit_str| (digit_str_to_u32(&digit_str),line.find(digit_str).unwrap_or(usize::MAX))).min_by_key(|(_,idx)| *idx).unwrap_or((0, usize::MAX));
-            let first_real_digit = line.char_indices().find(|(_, c)| c.is_ascii_digit()).map(|(idx,c)| (c.to_digit(10).expect("Not a number"), idx)).unwrap_or((0, usize::MAX));
-            
-            let last_str_digit = digit_strings.iter().map(|digit_str| (digit_str_to_u32(&digit_str), line.rfind(digit_str).unwrap_or(usize::MIN))).max_by_key(|(_,idx)| *idx).unwrap_or((0, usize::MIN));
-            let last_real_digit = line.char_indices().rfind(|(_, c)| c.is_ascii_digit()).map(|(idx,c)| (c.to_digit(10).expect("Not a number"), idx)).unwrap_or((0, usize::MIN));
-
-            let first_digit = std::cmp::min_by_key(first_str_digit, first_real_digit, |(_,idx)| *idx).0;
-            let last_digit = std::cmp::max_by_key(last_str_digit, last_real_digit, |(_,idx)| *idx).0;
+            let first_digit = digit_strings.iter().map(|digit_str| (digit_str_to_u32(&digit_str),line.find(digit_str).unwrap_or(usize::MAX))).min_by_key(|(_,idx)| *idx).unwrap_or((0, usize::MAX)).0;
+            let last_digit = digit_strings.iter().map(|digit_str| (digit_str_to_u32(&digit_str), line.rfind(digit_str).unwrap_or(usize::MIN))).max_by_key(|(_,idx)| *idx).unwrap_or((0, usize::MIN)).0;
 
             first_digit * 10 + last_digit
         }).sum()
