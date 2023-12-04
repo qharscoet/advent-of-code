@@ -1,13 +1,16 @@
 use crate::solution::Solution;
 
+use std::cmp::max;
+
 pub struct Day2;
 
 
 #[derive(Debug)]
+#[derive(Clone,Copy)]
 struct Set {
-    red : u32,
-    green : u32,
-    blue : u32
+    r : u32,
+    g : u32,
+    b : u32
 }
 
 impl std::str::FromStr for Set {
@@ -30,7 +33,7 @@ impl std::str::FromStr for Set {
             }
         }
 
-        Ok(Set { red: red, green: green, blue: blue })
+        Ok(Set { r: red, g: green, b: blue })
     }
 }
 
@@ -68,11 +71,23 @@ impl Solution for Day2 {
     }
 
     fn first_part(&self, input: &Self::Input) -> u32 {
-        input.iter().filter(|game| !game.sets.iter().any(|set| set.red > 12 || set.green > 13 || set.blue > 14)).map(|game| game.id).sum()
-        
+        input
+            .iter()
+            .filter(|game| {
+                !game.sets.iter().any(|set| set.r > 12 || set.g > 13 || set.b > 14)
+            })
+            .map(|game| game.id)
+            .sum()
     }
+
     fn second_part(&self, input: &Self::Input) -> u32 {
-        0
+        input
+            .iter()
+            .map(|game|{
+                let min_set = game.sets.iter().copied().reduce(|acc, s| Set{r:max(acc.r, s.r), g:max(acc.g, s.g), b:max(acc.b, s.b)}).unwrap();
+                min_set.r * min_set.g * min_set.b
+            })
+            .sum()
     }
 }
 
@@ -87,8 +102,6 @@ Game 3: 8 green, 6 blue, 20 red; 5 blue, 4 red, 13 green; 5 green, 1 red
 Game 4: 1 green, 3 red, 6 blue; 3 green, 6 red; 3 green, 15 blue, 14 red
 Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green";
 
-    static INPUT_TEST_2 : &str = "";
-
     #[test]
     fn test_first_part() {
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
@@ -98,8 +111,8 @@ Game 5: 6 red, 1 blue, 3 green; 2 blue, 1 red, 2 green";
 
     #[test]
     fn test_second_part() {
-        let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day2.parse_input(lines);
-        assert_eq!(Day2.second_part(&input), 0)
+        assert_eq!(Day2.second_part(&input), 2286)
     }
 }
