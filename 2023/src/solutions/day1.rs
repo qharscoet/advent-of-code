@@ -23,6 +23,7 @@ fn digit_str_to_u32(s:&str) -> u32
 impl Solution for Day1 {
     type Input = Vec<String>;
     type ReturnType = u32;
+    const DAY : u32 = 1;
 
     fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
         lines.map(|line| line).collect()
