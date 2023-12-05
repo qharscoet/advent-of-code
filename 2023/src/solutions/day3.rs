@@ -6,6 +6,19 @@ pub struct Day3;
 
 type Engine = Vec<Vec<char>>;
 
+fn get_symbols(map: &Engine) -> Vec<(usize, usize)> {
+    let mut symbols: Vec<(usize, usize)> = Vec::new();
+    for (line_idx, line) in map.iter().enumerate() {
+        for (col_idx, &c) in line.iter().enumerate() {
+            if !c.is_ascii_digit() && c != '.' {
+                symbols.push((line_idx, col_idx));
+            }
+        }
+    }
+
+    symbols
+}
+
 fn get_neighbours(map: &Engine, pos: (usize, usize)) -> Vec<(usize, usize)> {
     let (i, j) = pos;
     let y_range = i.saturating_sub(1)..=std::cmp::min(i + 1, map.len() - 1);
@@ -16,22 +29,22 @@ fn get_neighbours(map: &Engine, pos: (usize, usize)) -> Vec<(usize, usize)> {
         .collect()
 }
 
-
-fn get_parts_from_symbol(map: &Engine, symbol: (usize,usize)) -> Vec<u32> {
+fn get_parts_from_symbol(map: &Engine, symbol: (usize, usize)) -> Vec<u32> {
     let mut seen: HashSet<(usize, usize)> = HashSet::new();
-    let mut parts  = Vec::new();
-    let (i,j) = symbol;
+    let mut parts = Vec::new();
+    let (i, j) = symbol;
     for (i2, j2) in get_neighbours(map, (i, j)) {
         //println!("{}, {}", i2,j2);
         let r = map[i2][j2];
         let len = map[i2].len();
         if r.is_ascii_digit() {
+            /* We go from a neighbour position and scan left and write to recompose the number, maintaining a set in order to not have duplicates */
             let number_left: String = map[i2]
                 .iter()
                 .rev()
                 .skip(len - j2)
                 .enumerate()
-                .take_while(|(idx, c)| {c.is_ascii_digit() && seen.insert((i2, j2 - idx - 1))})
+                .take_while(|(idx, c)| c.is_ascii_digit() && seen.insert((i2, j2 - idx - 1)))
                 .map(|(_, c)| c)
                 .collect();
             let number_right: String = map[i2]
@@ -47,9 +60,8 @@ fn get_parts_from_symbol(map: &Engine, symbol: (usize,usize)) -> Vec<u32> {
                 parts.push(n);
             }
         }
-
     }
-    
+
     parts
 }
 
@@ -63,19 +75,22 @@ impl Solution for Day3 {
     }
 
     fn first_part(&self, input: &Self::Input) -> u32 {
-        let mut symbols: Vec<(usize, usize)> = Vec::new();
-        for (line_idx, line) in input.iter().enumerate() {
-            for (col_idx, &c) in line.iter().enumerate() {
-                if !c.is_ascii_digit() && c != '.' {
-                    symbols.push((line_idx, col_idx));
-                }
-            }
-        }
+        let symbols = get_symbols(input);
 
-        symbols.iter().flat_map(|s| get_parts_from_symbol(input, *s)).sum()
+        symbols
+            .iter()
+            .flat_map(|s| get_parts_from_symbol(input, *s))
+            .sum()
     }
     fn second_part(&self, input: &Self::Input) -> u32 {
-        0
+        let symbols = get_symbols(input);
+
+        symbols
+            .iter()
+            .map(|s| get_parts_from_symbol(input, *s))
+            .filter(|parts| parts.len() == 2)
+            .map(|parts| parts.iter().product::<u32>())
+            .sum()
     }
 }
 
@@ -106,8 +121,8 @@ mod tests {
 
     #[test]
     fn test_second_part() {
-        let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day3.parse_input(lines);
-        assert_eq!(Day3.second_part(&input), u32::MAX)
+        assert_eq!(Day3.second_part(&input), 467835)
     }
 }
