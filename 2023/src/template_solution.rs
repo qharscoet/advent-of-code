@@ -32,13 +32,13 @@ mod tests {
     fn test_first_part() {
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day0.parse_input(lines);
-        assert_eq!(Day0.first_part(&input), 0)
+        assert_eq!(Day0.first_part(&input), u32::MAX)
     }
 
     #[test]
     fn test_second_part() {
         let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
         let input = Day0.parse_input(lines);
-        assert_eq!(Day0.second_part(&input), 0)
+        assert_eq!(Day0.second_part(&input), u32::MAX)
     }
 }

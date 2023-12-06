@@ -27,9 +27,14 @@ pub trait Solution {
         let input = self
             .load_input(input_file)
             .expect("unable to open input file");
+
+        let now = std::time::Instant::now();
         let s1 = self.first_part(&input);
         let s2 = self.second_part(&input);
+        let elapsed = now.elapsed();
+
         println!("Solution 1: {}", s1);
         println!("Solution 2: {}", s2);
+        println!("Elapsed time : {:.2?}", elapsed);
     }
 }
