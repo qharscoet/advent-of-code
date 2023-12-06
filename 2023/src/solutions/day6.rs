@@ -9,6 +9,20 @@ pub struct Race {
     distance: u64
 }
 
+impl Race {
+    fn number_win(&self) -> u64 {
+        // t * (race.time - t) > race.distance
+        // - t² + t * race.time  - race.distance > 0
+        // a = -1; b = race.time; c = - race.distance
+
+        let delta = (self.time * self.time) as i64 - (4 * self.distance as i64); 
+        let s1 = (- (self.time as f64) - f64::sqrt(delta as f64)) / ( -2.0f64);
+        let s2 = (- (self.time as f64) + f64::sqrt(delta as f64)) / ( -2.0f64);
+        //println!("{s1}   {s2}");
+        (s1.ceil() - s2.ceil()) as u64
+    }
+}
+
 impl Solution for Day6 {
     type Input = Vec<Race>;
     type ReturnType = u64;
@@ -27,7 +41,8 @@ impl Solution for Day6 {
         input
             .iter()
             .map(|race| {
-                (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u64
+                race.number_win()
+                // (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u64
             })
             .product()
     }
@@ -41,8 +56,8 @@ impl Solution for Day6 {
             })
             .unwrap();
 
-        println!("{:?}", race);
-        (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u64
+        // (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u64
+        race.number_win()
     }
 }
 
