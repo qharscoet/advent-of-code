@@ -11,10 +11,10 @@ impl Solution for Day0 {
         lines.collect()
     }
 
-    fn first_part(&self, input: &Self::Input) -> u32 {
+    fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
         0
     }
-    fn second_part(&self, input: &Self::Input) -> u32 {
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
         0
     }
 }

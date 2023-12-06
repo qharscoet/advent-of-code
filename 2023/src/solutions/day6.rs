@@ -2,14 +2,16 @@ use crate::solution::Solution;
 
 pub struct Day6;
 
+#[derive(Clone, Copy)]
+#[derive(Debug)]
 pub struct Race {
-    time : u32,
-    distance: u32
+    time : u64,
+    distance: u64
 }
 
 impl Solution for Day6 {
     type Input = Vec<Race>;
-    type ReturnType = u32;
+    type ReturnType = u64;
     const DAY: u32 = 6;
 
     fn parse_input(&self, _lines: impl Iterator<Item = std::string::String>) -> Self::Input {
@@ -21,16 +23,26 @@ impl Solution for Day6 {
         ]
     }
 
-    fn first_part(&self, input: &Self::Input) -> u32 {
+    fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
         input
             .iter()
             .map(|race| {
-                (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u32
+                (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u64
             })
             .product()
     }
-    fn second_part(&self, input: &Self::Input) -> u32 {
-        0
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
+        let race = input
+            .iter()
+            .copied()
+            .reduce(|acc, r| Race {
+                time: acc.time * 10u64.pow(r.time.ilog10() + 1) + r.time,
+                distance: acc.distance * 10u64.pow(r.distance.ilog10() + 1) + r.distance,
+            })
+            .unwrap();
+
+        println!("{:?}", race);
+        (0..=race.time).filter(|t| t * (race.time - t) > race.distance).count() as u64
     }
 }
 
@@ -53,9 +65,9 @@ mod tests {
     fn test_second_part() {
         let input = vec![
             Race{time:7, distance:9},
-            Race{time:15, distance:30},
+            Race{time:15, distance:40},
             Race{time:30, distance:200}
         ];
-        assert_eq!(Day6.second_part(&input), u32::MAX)
+        assert_eq!(Day6.second_part(&input), 71503)
     }
 }
