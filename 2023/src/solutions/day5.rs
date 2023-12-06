@@ -60,7 +60,7 @@ impl Solution for Day5 {
 
         /* Skipping the empty line after the seeds */
         let _: String = lines.by_ref().take_while(|l| !l.is_empty()).collect();
-        
+
         let mut maps: Vec<Map> = Vec::new();
         while let Some(_s) = lines.next() {
             let mut val: Map = lines
@@ -87,7 +87,16 @@ impl Solution for Day5 {
             .unwrap_or_default()
     }
     fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
-        0
+        input
+            .seeds
+            .chunks(2)
+            .flat_map(|c| {
+                (c[0]..(c[0] + c[1]))
+                    .map(|seed| input.maps.iter().fold(seed, |n, m| get_dst_from_map(m, n)))
+                    .min()
+            })
+            .min()
+            .unwrap_or_default()
     }
 }
 
@@ -132,8 +141,6 @@ humidity-to-location map:
 60 56 37
 56 93 4";
 
-    static INPUT_TEST_2: &str = "";
-
     #[test]
     fn test_map() {
         let data = "50 98 2
@@ -163,8 +170,8 @@ humidity-to-location map:
 
     #[test]
     fn test_second_part() {
-        let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day5.parse_input(lines);
-        assert_eq!(Day5.second_part(&input), u64::MAX)
+        assert_eq!(Day5.second_part(&input), 46)
     }
 }
