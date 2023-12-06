@@ -110,8 +110,6 @@ mod tests {
 ...$.*....
 .664.598..";
 
-    static INPUT_TEST_2: &str = "";
-
     #[test]
     fn test_first_part() {
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());

@@ -47,18 +47,25 @@ impl Solution for Day4 {
     }
 
     fn first_part(&self, input: &Self::Input) -> u32 {
-        println!("{:?}", input.len());
         input
             .iter()
             .map(|card| {
                 let count = card.winning_numbers.intersection(&card.have_numbers).count() as u32;
                 if count > 0 {2u32.pow(count -1)} else {0}
             })
-            .inspect(|score| println!("{score}"))
             .sum()
     }
     fn second_part(&self, input: &Self::Input) -> u32 {
-        0
+        let mut counts = vec![1u32; input.len()];
+
+        for card in input {
+            let won = card.winning_numbers.intersection(&card.have_numbers).count() as u32;
+            for i in card.id..card.id+won {
+                counts[i as usize] += counts[card.id as usize - 1]; 
+            }
+        }
+        
+        counts.iter().sum()
     }
 }
 
@@ -74,8 +81,6 @@ Card 4: 41 92 73 84 69 | 59 84 76 51 58  5 54 83
 Card 5: 87 83 26 28 32 | 88 30 70 12 93 22 82 36
 Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
 
-    static INPUT_TEST_2: &str = "";
-
     #[test]
     fn test_first_part() {
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
@@ -85,8 +90,8 @@ Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11";
 
     #[test]
     fn test_second_part() {
-        let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day4.parse_input(lines);
-        assert_eq!(Day4.second_part(&input), u32::MAX)
+        assert_eq!(Day4.second_part(&input), 30)
     }
 }
