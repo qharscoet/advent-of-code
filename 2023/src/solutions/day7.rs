@@ -51,19 +51,27 @@ impl PartialEq for Hand {
 fn get_hand_type(cards: &Vec<u32>) -> HandType {
     use HandType::*;
 
-    let mut counts = [0u32; 13];
+    let mut counts = [0u32; 14];
     for c in cards.iter() {
-        /* -1 because values goes from 2 to 14 */
-        counts[*c as usize - 2] += 1;
+        /* -1 because values goes from 1 to 14 */
+        counts[*c as usize - 1] += 1;
     }
-
     let mut groups = [0u32; 6];
+    let joker_count = counts[0];
+
+    let max = counts.iter_mut().skip(1).max().unwrap();
+    *max += joker_count;
+    counts[0] -= joker_count;
 
     for count in counts {
         groups[count as usize] += 1;
     }
 
-    return if groups[5] > 0 {
+
+    println!("{:?}", counts);
+    println!("{:?}", groups);
+
+    if groups[5] > 0 {
         FiveOfAKind
     } else if groups[4] > 0 {
         FourOfAKind
@@ -77,7 +85,18 @@ fn get_hand_type(cards: &Vec<u32>) -> HandType {
         OnePair
     } else {
         HighCard
-    };
+    }
+
+    // // Joker...
+    // match handtype {
+    //     HighCard => if joker_count == 1 { OnePair} else {HighCard},
+    //     OnePair => match joker_count { 1|2 => ThreeOfAKind, _ => OnePair},
+    //     TwoPair => match joker_count { 2 => FourOfAKind, 1 => FullHouse, _ => TwoPair},
+    //     ThreeOfAKind => match joker_count { 3|1 => FourOfAKind, _=> ThreeOfAKind }
+    //     FullHouse => match joker_count { 3 | 2 => FiveOfAKind, 1 => FourOfAKind, _ => FullHouse }
+    //     FourOfAKind => if joker_count == 1 {FiveOfAKind} else { FourOfAKind},
+    //     FiveOfAKind => FiveOfAKind,
+    // }
 }
 
 impl std::str::FromStr for Hand {
@@ -96,7 +115,7 @@ impl std::str::FromStr for Hand {
                     c.to_digit(10).ok_or("invalid number")
                 }
                 'T' => Ok(10u32),
-                'J' => Ok(11u32),
+                'J' => Ok(1u32),
                 'Q' => Ok(12u32),
                 'K' => Ok(13u32),
                 'A' => Ok(14u32),
@@ -105,6 +124,7 @@ impl std::str::FromStr for Hand {
             .collect();
 
         let cards = cards_result.unwrap();
+        println!("{cards_str}");
         let hand_type = get_hand_type(&cards);
 
         Ok(Hand {
@@ -132,23 +152,27 @@ impl Solution for Day7 {
             .map(|(idx, hand)| (idx as u32 + 1) * hand.bid)
             .sum()
     }
-    fn second_part(&self, _input: &Self::Input) -> Self::ReturnType {
-        0
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
+        let mut copy = input.clone();
+        copy.sort();
+        copy.iter()
+            .enumerate()
+            .inspect(|(idx, hand)| println!("{} {} {:?} {:?}", idx, hand.bid, hand.hand_type, hand.cards))
+            .map(|(idx, hand)| (idx as u32 + 1) * hand.bid)
+            .sum()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Day7;
-    use crate::solution::Solution;
+    use super::{Day7, get_hand_type};
+    use crate::{solution::Solution, solutions::day7::HandType};
 
     static INPUT_TEST: &str = "32T3K 765
 T55J5 684
 KK677 28
 KTJJT 220
 QQQJA 483";
-
-    static INPUT_TEST_2: &str = "";
 
     #[test]
     fn test_first_part() {
@@ -159,8 +183,15 @@ QQQJA 483";
 
     #[test]
     fn test_second_part() {
-        let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
+        let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day7.parse_input(lines);
-        assert_eq!(Day7.second_part(&input), u32::MAX)
+        assert_eq!(Day7.second_part(&input), 5905)
+    }
+
+    #[test]
+    fn test_yolo() {
+        let cards = vec![10,7,1,10,4];
+        let handtype = get_hand_type(&cards);
+        assert_eq!(handtype, HandType::ThreeOfAKind);
     }
 }
