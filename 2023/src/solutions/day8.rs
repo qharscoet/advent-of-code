@@ -18,9 +18,46 @@ pub struct Map {
     network: Network,
 }
 
+fn euclid(a: u64, b: u64) -> u64 {
+    match b {
+        0 => a,
+        _ => euclid(b, a % b),
+    }
+}
+
+fn lcm(a: u64, b: u64) -> u64 {
+    a * b / euclid(a, b)
+}
+
+fn find_path_count<F>(input: &Map, start_node: Node, f: F) -> u32
+where
+    F: Fn(Node) -> bool,
+{
+    input
+        .instr
+        .iter()
+        .cycle()
+        .scan(start_node, |node, i| {
+            if f(node.clone()) {
+                return None;
+            }
+
+            let (l, r) = input.network.get(node).expect("Unknown node");
+            let next_node = match i {
+                Direction::L => l,
+                Direction::R => r,
+            };
+
+            // println!("curr node : {}, dir {:?}, next {}", node, i , next_node);
+            *node = next_node.clone();
+            Some(next_node)
+        })
+        .count() as u32
+}
+
 impl Solution for Day8 {
     type Input = Map;
-    type ReturnType = u32;
+    type ReturnType = u64;
     const DAY: u32 = 8;
 
     fn parse_input(&self, mut lines: impl Iterator<Item = std::string::String>) -> Self::Input {
@@ -60,36 +97,31 @@ impl Solution for Day8 {
     }
 
     fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
-        input
-            .instr
-            .iter()
-            .cycle()
-            .scan("AAA".to_string(), |node, i| {
-                if node == "ZZZ" {
-                    return None;
-                }
-
-                let (l, r) = input.network.get(node).expect("Unknown node");
-                let next_node = match i {
-                    Direction::L => l,
-                    Direction::R => r,
-                };
-
-                // println!("curr node : {}, dir {:?}, next {}", node, i , next_node);
-                *node = next_node.clone();
-                Some(next_node)
-            })
-            .count() as u32
+        find_path_count(&input, "AAA".to_string(), |node| node == "ZZZ") as u64
     }
-    fn second_part(&self, _input: &Self::Input) -> Self::ReturnType {
-        0
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
+        let nodes: Vec<&Node> = input
+            .network
+            .keys()
+            .filter(|k| k.chars().last().unwrap() == 'A')
+            .collect();
+
+        nodes
+            .iter()
+            .map(|node| {
+                find_path_count(&input, node.to_string(), |n| {
+                    n.chars().last().unwrap() == 'Z'
+                }) as u64
+            })
+            .reduce(|acc, v| lcm(acc, v))
+            .unwrap()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Day8;
-    use crate::solution::Solution;
+    use crate::{solution::Solution, solutions::day8::lcm};
 
     static INPUT_TEST: &str = "RL
 
@@ -107,6 +139,17 @@ AAA = (BBB, BBB)
 BBB = (AAA, ZZZ)
 ZZZ = (ZZZ, ZZZ)";
 
+    static INPUT_TEST_3: &str = "LR
+
+11A = (11B, XXX)
+11B = (XXX, 11Z)
+11Z = (11B, XXX)
+22A = (22B, XXX)
+22B = (22C, 22C)
+22C = (22Z, 22Z)
+22Z = (22B, 22B)
+XXX = (XXX, XXX)";
+
     #[test]
     fn test_first_part() {
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
@@ -123,8 +166,13 @@ ZZZ = (ZZZ, ZZZ)";
 
     #[test]
     fn test_second_part() {
-        let lines = INPUT_TEST_2.split('\n').map(|s| s.to_string());
+        let lines = INPUT_TEST_3.split('\n').map(|s| s.to_string());
         let input = Day8.parse_input(lines);
-        assert_eq!(Day8.second_part(&input), u32::MAX)
+        assert_eq!(Day8.second_part(&input), 6)
+    }
+
+    #[test]
+    fn test_lcm() {
+        assert_eq!(lcm(18, 12), 36)
     }
 }
