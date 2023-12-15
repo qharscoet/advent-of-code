@@ -1,3 +1,5 @@
+use rayon::vec;
+
 use crate::solution::Solution;
 
 pub struct Day15;
@@ -10,6 +12,12 @@ fn hash(s: &str) -> u8 {
         val *= 17;
         val % 256
     }) as u8
+}
+
+#[derive(Clone)]
+struct Lens {
+    label : String,
+    focal : u32,
 }
 
 impl Solution for Day15 {
@@ -29,8 +37,30 @@ impl Solution for Day15 {
     fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
         input.iter().map(|s| hash(s) as u32).sum()
     }
-    fn second_part(&self, _input: &Self::Input) -> Self::ReturnType {
-        0
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
+        const EMPTY : Vec<Lens >= Vec::new();
+        let mut boxes : [Vec<Lens>; 256] = [EMPTY; 256];
+
+        for s in input {
+            if let Some(idx) = s.find(&['-', '=']) {
+                let (label, focal) = s.split_once(&['-', '=']).unwrap();
+                let h = hash(label) as usize;
+                match s.as_bytes()[idx] {
+                    b'=' => {
+                        if let Some(lens) = boxes[h].iter_mut().find(|l| l.label == label) {
+                            lens.focal = focal.parse().unwrap();
+                        } else {
+                            boxes[h].push(Lens { label: label.to_owned(), focal: focal.parse().unwrap() });
+                        }
+                    },
+                    b'-' => boxes[h].retain(|lens| lens.label != label),
+                    _ => ()
+                }
+            }
+        }
+        
+
+        boxes.iter().enumerate().flat_map(|(id_box,b)| b.iter().enumerate().map(move |(id_lens, lens)| (id_box +1) as u32 * (id_lens+1) as u32 * lens.focal)).sum()
     }
 }
 
@@ -56,6 +86,6 @@ mod tests {
     fn test_second_part() {
         let lines = INPUT_TEST.split('\n').map(|s| s.to_string());
         let input = Day15.parse_input(lines);
-        assert_eq!(Day15.second_part(&input), u32::MAX)
+        assert_eq!(Day15.second_part(&input), 145)
     }
 }
