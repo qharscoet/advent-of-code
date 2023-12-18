@@ -4,7 +4,7 @@ use crate::solution::Solution;
 
 pub struct Day16;
 
-#[derive(Clone, Copy, Hash, Eq, PartialEq)]
+#[derive(Clone, Copy, Hash, Eq, PartialEq, Debug)]
 enum Direction {
     Up,
     Right,
@@ -47,6 +47,62 @@ fn get_next((r, c, dir): Beam, (max_x, max_y): (usize, usize)) -> Option<Beam> {
     }
 }
 
+fn get_energized(start_beam: Beam, input: &Vec<Vec<char>>) -> u32 {
+    let mut queue = VecDeque::from([start_beam]);
+    let mut set = HashSet::new();
+
+    let max = (input[0].len(), input.len());
+
+    while let Some(beam) = queue.pop_front() {
+        let mut push_next = |beam: Beam| {
+            if let Some(next) = get_next(beam, max) {
+                if !set.contains(&next) {
+                    queue.push_back(next);
+                }
+            };
+        };
+
+        let (r, c, dir) = beam.clone();
+        match input[r][c] {
+            '.' => push_next(beam),
+            '/' => match dir {
+                Direction::Up => push_next((r, c, Direction::Right)),
+                Direction::Right => push_next((r, c, Direction::Up)),
+                Direction::Down => push_next((r, c, Direction::Left)),
+                Direction::Left => push_next((r, c, Direction::Down)),
+            },
+            '\\' => match dir {
+                Direction::Up => push_next((r, c, Direction::Left)),
+                Direction::Right => push_next((r, c, Direction::Down)),
+                Direction::Down => push_next((r, c, Direction::Right)),
+                Direction::Left => push_next((r, c, Direction::Up)),
+            },
+            '|' => match dir {
+                Direction::Up | Direction::Down => push_next(beam),
+                Direction::Left | Direction::Right => {
+                    push_next((r, c, Direction::Up));
+                    push_next((r, c, Direction::Down));
+                }
+            },
+            '-' => match dir {
+                Direction::Left | Direction::Right => push_next(beam),
+                Direction::Up | Direction::Down => {
+                    push_next((r, c, Direction::Left));
+                    push_next((r, c, Direction::Right));
+                }
+            },
+            _ => (),
+        }
+
+        set.insert((r, c, dir));
+    }
+
+    set.iter()
+        .map(|t| (t.0, t.1))
+        .collect::<HashSet<(usize, usize)>>()
+        .len() as u32
+}
+
 impl Solution for Day16 {
     type Input = Vec<Vec<char>>;
     type ReturnType = u32;
@@ -57,59 +113,25 @@ impl Solution for Day16 {
     }
 
     fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
-        let mut queue = VecDeque::from([(0, 0, Direction::Right)]);
-        let mut set = HashSet::new();
-
-        let max = (input[0].len(), input.len());
-
-        while let Some(beam) = queue.pop_front() {
-            let mut push_next = |beam: Beam| {
-                if let Some(next) = get_next(beam, max) {
-                    if !set.contains(&next) {
-                        queue.push_back(next);
-                    }
-                };
-            };
-
-            let (r, c, dir) = beam.clone();
-            match input[r][c] {
-                '.' => push_next(beam),
-                '/' => match dir {
-                    Direction::Up => push_next((r, c, Direction::Right)),
-                    Direction::Right => push_next((r, c, Direction::Up)),
-                    Direction::Down => push_next((r, c, Direction::Left)),
-                    Direction::Left => push_next((r, c, Direction::Down)),
-                },
-                '\\' => match dir {
-                    Direction::Up => push_next((r, c, Direction::Left)),
-                    Direction::Right => push_next((r, c, Direction::Down)),
-                    Direction::Down => push_next((r, c, Direction::Right)),
-                    Direction::Left => push_next((r, c, Direction::Up)),
-                },
-                '|' => match dir {
-                    Direction::Up | Direction::Down => push_next(beam),
-                    Direction::Left | Direction::Right => {
-                        push_next((r, c, Direction::Up));
-                        push_next((r, c, Direction::Down));
-                    }
-                },
-                '-' => match dir {
-                    Direction::Left | Direction::Right => push_next(beam),
-                    Direction::Up | Direction::Down => {
-                        push_next((r, c, Direction::Left));
-                        push_next((r, c, Direction::Right));
-                    }
-                },
-                _ => (),
-            }
-
-            set.insert((r, c,dir));
+        get_energized((0, 0, Direction::Right), &input)
+    }
+    fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
+        let mut all_start_beams: Vec<Beam> = Vec::new();
+        for r in 0..input.len() {
+            all_start_beams.push((r, 0, Direction::Right));
+            all_start_beams.push((r, input[0].len() - 1, Direction::Left));
         }
 
-        set.iter().map(|t| (t.0, t.1)).collect::<HashSet<(usize,usize)>>().len() as u32
-    }
-    fn second_part(&self, _input: &Self::Input) -> Self::ReturnType {
-        0
+        for c in 0..input[0].len() {
+            all_start_beams.push((0, c, Direction::Down));
+            all_start_beams.push((input.len() - 1, c, Direction::Up));
+        }
+
+        all_start_beams
+            .iter()
+            .map(|start_pos| get_energized(*start_pos, &input))
+            .max()
+            .unwrap()
     }
 }
 
