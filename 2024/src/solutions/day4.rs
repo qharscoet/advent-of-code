@@ -1,8 +1,4 @@
-use std::{cmp::{max, min}};
-
 use crate::solution::Solution;
-
-use regex::Regex;
 pub struct Day4;
 
 
@@ -54,7 +50,6 @@ impl Solution for Day4 {
             }
 
         }
-
 
 
         xmas_count as u32
