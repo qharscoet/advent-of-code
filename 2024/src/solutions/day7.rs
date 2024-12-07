@@ -2,43 +2,46 @@ use crate::solution::Solution;
 
 pub struct Day7;
 
-pub struct Equation {
-    result : u64,
-    values: Vec<u32>
-}
+type FnOperator = fn(u64, u64) -> u64;
 
 fn concat(a : u64, b:u64) -> u64 {
     a * (10u64.pow(b.ilog10() +1)) +b
 }
 
+pub struct Equation {
+    result : u64,
+    values: Vec<u32>
+}
+
+impl std::str::FromStr for Equation {
+    type Err = &'static str;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.split_once(':')
+        {
+            Some((result, values)) =>  Ok(Equation{ result: result.parse().unwrap_or_default(), values : values.split_ascii_whitespace().flat_map(|s| s.parse()).collect()}),
+            None => return Err("no : to parse"),
+        }
+    }
+}
+
 impl Equation {
 
-    fn valid_p1(&self,idx :usize, acc: u64) -> bool {
+    fn valid(&self,idx :usize, acc: u64, operators : &Vec<FnOperator>) -> bool {
 
         if acc > self.result {return false;}
         if idx == self.values.len(){return acc == self.result;}
 
         let v = self.values[idx];
 
-        self.valid_p1(idx+1, acc + (v as u64)) | self.valid_p1(idx+1, acc * (v as u64))
-    }
-
-    fn valid_p2(&self,idx :usize, acc: u64) -> bool {
-
-        if acc > self.result {return false;}
-        if idx == self.values.len(){return acc == self.result;}
-
-        let v = self.values[idx];
-
-        self.valid_p2(idx+1, acc + (v as u64)) | self.valid_p2(idx+1, acc * (v as u64)) | self.valid_p2(idx+1, concat(acc, v as u64))
+        operators.iter().any(|op| self.valid(idx +1, op(acc, v as u64), operators))
     }
     
     fn is_valid_p1(&self) -> bool {
-        self.valid_p1(1, self.values[0] as u64)
+        self.valid(1, self.values[0] as u64, &vec![|a,b| a + b, |a,b| a*b])
     }
 
     fn is_valid_p2(&self) -> bool {
-        self.valid_p2(1, self.values[0] as u64)
+        self.valid(1, self.values[0] as u64, &vec![|a,b| a + b, |a,b| a*b, |a,b| concat(a, b)])
     }
 
 }
@@ -49,17 +52,12 @@ impl Solution for Day7 {
     const DAY : u32 = 7;
 
     fn parse_input(&self, lines: impl Iterator<Item = std::string::String>) -> Self::Input {
-        lines.map(|l| {
-            let (result, values) = l.split_once(':').unwrap_or_default();
-
-            Equation{ result: result.parse().unwrap_or_default(), values : values.split_ascii_whitespace().map(|s| s.parse().unwrap_or_default()).collect()}
-        }).collect()
+        lines.flat_map(|l|l.parse()).collect()
     }
 
     fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
         input.iter().filter_map(|eq| if eq.is_valid_p1() {Some(eq.result)} else {None}).sum()
     }
-
 
     fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
 
