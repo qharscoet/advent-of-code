@@ -2,6 +2,10 @@ use crate::solution::Solution;
 
 pub struct Day9;
 
+fn add_block(id : usize, start :usize, size:usize) -> usize {
+    if size == 0 { 0 } else {id * ( start* size + (((size -1) * (size))/2))}
+}
+
 impl Solution for Day9 {
     type Input = String;
     type ReturnType = u64;
@@ -16,61 +20,49 @@ impl Solution for Day9 {
         let mut j = if (input.len() & 1) == 0 { input.len() - 2 } else {input.len() - 1};
 
         let chars = input.as_bytes();
-        let mut is_free_space = false;
         let mut checksum = 0;
         let mut curr_id = 0;
         let mut curr_rid = (input.len() - 1)/2;
 
-        let mut remaining_i = chars[i] -('0' as u8);
-        let mut remaining_j = chars[j] -('0' as u8);
+        let mut remaining_i = (chars[i] -('0' as u8)) as usize;
+        let mut remaining_j = (chars[j] -('0' as u8)) as usize;
         let mut curr_pos = 0;
         while i < j {
-            if !is_free_space {
+            if (i&1) == 0 {
+                checksum +=  add_block(curr_id, curr_pos, remaining_i);
+                
+                i +=1;
+                curr_id +=1;
+                curr_pos += remaining_i;
+                remaining_i = (chars[i] -('0' as u8)) as usize;
+
+            } else {
+                // println!("free space filled by {}, remaining {}, remaining j {} i = {}, j = {}", curr_rid, remaining_i, remaining_j,i,j);
+
+                let min = if remaining_i < remaining_j { remaining_i} else {remaining_j};
+
+                checksum += add_block(curr_rid, curr_pos, min);
+                remaining_i -= min;
+                remaining_j -= min;
+                curr_pos+=min;
+
                 if remaining_i == 0 {
                     i+=1;
-                    remaining_i = chars[i]  -('0' as u8);
-                    is_free_space = !is_free_space;
-                    curr_id += 1;
-                } else {
-                    // println!("block {}, remaining {}", curr_id, remaining_i);
-                    checksum += curr_pos*curr_id;
-                    remaining_i -= 1;
-                    curr_pos+=1;
-                        
-                }
-            } else {
-
-                if remaining_i > 0 && remaining_j > 0 {
-                    // println!("free space filled by {}, remaining {}, remaining j {} i = {}, j = {}", curr_rid, remaining_i, remaining_j,i,j);
-                    checksum += curr_pos * curr_rid;
-                    remaining_i -= 1;
-                    remaining_j -= 1;
-                    curr_pos+=1;
-                } else {
-                    if remaining_i == 0 {
-                        i+=1;
-                        remaining_i = chars[i] -('0' as u8);
-                        is_free_space = !is_free_space;
-                    }
-    
-                    if remaining_j == 0 {
-                        j -= 2;
-                        remaining_j = chars[j] -('0' as u8) ;
-                        curr_rid -= 1;
-                    }
+                    remaining_i = (chars[i] -('0' as u8)) as usize;
                 }
 
+                if remaining_j == 0 {
+                    j -= 2;
+                    remaining_j = (chars[j] -('0' as u8) ) as usize;
+                    curr_rid -= 1;
+                }
             }
 
         }
 
         // println!("same block, curr_id {}, curr_rid {}, remaining_i {}, remaining_j {}", curr_id, curr_rid, remaining_i, remaining_j);
-        while remaining_j > 0 {
-            checksum += curr_pos * curr_rid;
-            remaining_j-=1;
+        checksum += add_block(curr_rid, curr_pos, remaining_j);
 
-            curr_pos+=1;
-        }
         checksum as u64
     }
 
@@ -101,10 +93,7 @@ impl Solution for Day9 {
             }
         }
 
-        let checksum : usize = files.iter().enumerate().map(|(id,f)| {
-            //(f.start..(f.start + f.size)).map(|i| i * f.id).sum::<usize>()
-            id * ( f.start* f.size + (((f.size -1) * (f.size))/2))
-        }).sum();
+        let checksum : usize = files.iter().enumerate().map(|(id,f)| add_block(id, f.start, f.size)).sum();
 
        checksum as u64
     }
