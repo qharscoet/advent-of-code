@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+use std::collections::{HashMap, VecDeque};
 
 use crate::solution::Solution;
 
@@ -27,32 +27,20 @@ impl Region {
         self.positions.iter().fold((0,0),|acc, p| (acc.0.max(p.0.0), acc.1.max(p.0.1)))
     }
 
-    fn perimeter_x(&self) -> usize {
+    fn perimeter_one_side(&self, side:bool) -> usize {
         let min = self.min();
         let max = self.max();
 
-        (min.1..=max.1).fold(0, |acc, x| {
-            let (l, inside) = (min.0..=max.0).fold((0, 0), |(acc, inside), y| {
-                let state = (self.positions.contains_key(&(y,x)) as u32) + (*self.positions.get(&(y,x)).unwrap_or(&false) as u32);
+        let outer_range = if side {min.1..=max.1} else {min.0..=max.0};
+        let inner_range = if side {min.0..=max.0} else {min.1..=max.1};
+
+        outer_range.fold(0, |acc, x| {
+            let (l, inside) = inner_range.clone().fold((0, 0), |(acc, inside), y| {
+                let pos = if side {&(y,x)} else {&(x,y)};
+                let state = (self.positions.contains_key(pos) as u32) + (*self.positions.get(pos).unwrap_or(&false) as u32);
                 let changed = state != inside;
                 let connect = changed && (inside > 0 && state > 0); 
                 (acc + (changed as u32) + (connect as u32), state)
-            });
-
-            acc + l + ((inside != 0) as u32)
-        }) as usize
-    }
-
-    fn perimeter_y(&self) -> usize {
-        let min = self.min();
-        let max = self.max();
-
-        (min.0..=max.0).fold(0, |acc, x| {
-            let (l, inside) = (min.1..=max.1).fold((0, 0), |(acc, inside), y| {
-                let state = (self.positions.contains_key(&(x,y)) as u32) + (*self.positions.get(&(x,y)).unwrap_or(&false) as u32);
-                let changed = state != inside;
-                let connect = changed && (inside > 0 && state > 0); 
-                (acc + (changed as u32 + (connect as u32)), state)
             });
 
             acc + l + ((inside != 0) as u32)
@@ -67,10 +55,38 @@ impl Region {
             We go in and out of the "O slice" 6 times
         */
 
-        let x = self.perimeter_x();
-        let y = self.perimeter_y();
+        let x = self.perimeter_one_side(true);
+        let y = self.perimeter_one_side(false);
         
         (x + y) as usize
+    }
+
+    fn sides_count_1d(&self, side:bool) -> usize {
+        let min = self.min();
+        let max = self.max();
+
+        let outer_range = if side {min.1..=max.1} else {min.0..=max.0};
+        let inner_range = if side {min.0..=max.0} else {min.1..=max.1};
+
+        let walls = outer_range.fold(HashMap::new(), |mut acc, x| {
+            let (mut l, inside) = inner_range.clone().fold((HashMap::new(), false), |(mut acc, inside), y| {
+                let pos = if side {(y,x)} else {(x,y)};
+                let changed = *self.positions.get(&pos).unwrap_or(&false) != inside;
+                if changed { acc.insert(pos, inside);}
+
+                (acc , inside ^ changed)
+            });
+            if inside {
+                let pos = if side {(max.0 +1, x)} else {(x,max.1 +1)};
+                l.insert(pos, true);
+            }
+
+            l.iter().for_each(|v| {acc.insert(*v.0, *v.1);});
+            acc
+        });
+
+        let r = Region{plant:'Y', positions: walls};
+        r.perimeter_one_side(!side) /2
     }
 
     fn sides_count(&self) -> usize {
@@ -78,55 +94,10 @@ impl Region {
             Same base algorithm as the perimeter, but instead of counting the number of changes,
             we store those positiosn, and count the number of unique position on the other dimension
         */ 
-        let min = self.min();
-        let max = self.max();
 
-        let y = (min.0..=max.0).fold(HashMap::new(), |mut acc, x| {
-            let (mut l, inside) = (min.1..=max.1).fold((HashMap::new(), false), |(mut acc, inside), y| {
-                let changed = *self.positions.get(&(x, y)).unwrap_or(&false) != inside;
-                if changed { acc.insert((x,y), inside);}
-
-                (acc , inside ^ changed)
-            });
-            if inside {l.insert((x, max.1 +1), true);}
-
-            l.iter().for_each(|v| {acc.insert(*v.0, *v.1);});
-            acc
-        });
-
-        let r = Region{plant:'Y', positions: y};
-        let sides_y = r.perimeter_x() /2;
-
-        let x = (min.1..=max.1).fold(HashMap::new(), |mut acc, y| {
-            let (mut l, inside) = (min.0..=max.0).fold((HashMap::new(), false), |(mut acc, inside), x| {
-                let changed = *self.positions.get(&(x, y)).unwrap_or(&false) != inside;
-                if changed { acc.insert((x, y) ,inside);}
-
-                (acc , inside ^ changed)
-            });
-            if inside {l.insert((max.0 +1, y), true);}
-
-            l.iter().for_each(|v| {acc.insert(*v.0, *v.1);});
-            acc
-        });
-
-        let r = Region{plant:'X', positions: x};
-        let sides_x = r.perimeter_y() /2;
-
-        sides_x + sides_y
+        self.sides_count_1d(false) + self.sides_count_1d(true)
     }
 
-    fn draw(&self) {
-        let min = self.min();
-        let max = self.max();
-
-        for i in min.0..=max.0 {
-            for j in min.1..=max.1{
-                print!("{}", if self.positions.contains_key(&(i,j)) { if self.positions[&(i,j)] {self.plant} else {'O'}} else {'.'});
-            }
-            print!("\n");
-        }
-    }
 }
 
 fn get_neighbours(g:&Graph, idx :(usize,usize)) -> Vec<(usize,usize)> {
