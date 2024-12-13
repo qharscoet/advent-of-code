@@ -10,6 +10,7 @@ pub mod day9;
 pub mod day10;
 pub mod day11;
 pub mod day12;
+pub mod day13;
 
 
 use crate::solution::Solution;
@@ -28,6 +29,7 @@ pub fn run(day:u32) {
         10 => { day10::Day10.solve(); }
         11 => { day11::Day11.solve(); }
         12 => { day12::Day12.solve(); }
+        13 => { day13::Day13.solve(); }
         _ => {}
     };
 }

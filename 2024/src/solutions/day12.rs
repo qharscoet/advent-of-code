@@ -98,6 +98,18 @@ impl Region {
         self.sides_count_1d(false) + self.sides_count_1d(true)
     }
 
+    fn draw(&self) {
+        let min = self.min();
+        let max = self.max();
+
+        for i in min.0..=max.0 {
+            for j in min.1..=max.1{
+                print!("{}", if self.positions.contains_key(&(i,j)) { if self.positions[&(i,j)] {self.plant} else {'O'}} else {'.'});
+            }
+            print!("\n");
+        }
+    }
+
 }
 
 fn get_neighbours(g:&Graph, idx :(usize,usize)) -> Vec<(usize,usize)> {
