@@ -9,7 +9,7 @@ type Graph = Vec<Vec<char>>;
 #[derive(Debug)]
 pub struct Region {
     plant: char,
-    positions : HashSet<(usize,usize)>,
+    positions : HashMap<(usize,usize), bool>,
     // area: usize,
     // perimeter:usize,
 }
@@ -20,11 +20,11 @@ impl Region {
     }
 
     fn min(&self) -> (usize,usize) {
-        self.positions.iter().fold((usize::MAX,usize::MAX),|acc, p| (acc.0.min(p.0), acc.1.min(p.1)))
+        self.positions.iter().fold((usize::MAX,usize::MAX),|acc, p| (acc.0.min(p.0.0), acc.1.min(p.0.1)))
     }
 
     fn max(&self) -> (usize,usize) {
-        self.positions.iter().fold((0,0),|acc, p| (acc.0.max(p.0), acc.1.max(p.1)))
+        self.positions.iter().fold((0,0),|acc, p| (acc.0.max(p.0.0), acc.1.max(p.0.1)))
     }
 
     fn perimeter_x(&self) -> usize {
@@ -32,12 +32,14 @@ impl Region {
         let max = self.max();
 
         (min.1..=max.1).fold(0, |acc, x| {
-            let (l, inside) = (min.0..=max.0).fold((0, false), |(acc, inside), y| {
-                let changed = self.positions.contains(&(y, x)) != inside;
-                (acc + (changed as u32), inside ^ changed)
+            let (l, inside) = (min.0..=max.0).fold((0, 0), |(acc, inside), y| {
+                let state = (self.positions.contains_key(&(y,x)) as u32) + (*self.positions.get(&(y,x)).unwrap_or(&false) as u32);
+                let changed = state != inside;
+                let connect = changed && (inside > 0 && state > 0); 
+                (acc + (changed as u32) + (connect as u32), state)
             });
 
-            acc + l + (inside as u32)
+            acc + l + ((inside != 0) as u32)
         }) as usize
     }
 
@@ -46,12 +48,14 @@ impl Region {
         let max = self.max();
 
         (min.0..=max.0).fold(0, |acc, x| {
-            let (l, inside) = (min.1..=max.1).fold((0, false), |(acc, inside), y| {
-                let changed = self.positions.contains(&(x, y)) != inside;
-                (acc + (changed as u32), inside ^ changed)
+            let (l, inside) = (min.1..=max.1).fold((0, 0), |(acc, inside), y| {
+                let state = (self.positions.contains_key(&(x,y)) as u32) + (*self.positions.get(&(x,y)).unwrap_or(&false) as u32);
+                let changed = state != inside;
+                let connect = changed && (inside > 0 && state > 0); 
+                (acc + (changed as u32 + (connect as u32)), state)
             });
 
-            acc + l + (inside as u32)
+            acc + l + ((inside != 0) as u32)
         }) as usize
     }
 
@@ -77,39 +81,38 @@ impl Region {
         let min = self.min();
         let max = self.max();
 
-        let y = (min.0..=max.0).fold(HashSet::new(), |acc, x| {
-            let (mut l, inside) = (min.1..=max.1).fold((HashSet::new(), false), |(mut acc, inside), y| {
-                let changed = self.positions.contains(&(x, y)) != inside;
-                if changed { acc.insert((x,y));}
+        let y = (min.0..=max.0).fold(HashMap::new(), |mut acc, x| {
+            let (mut l, inside) = (min.1..=max.1).fold((HashMap::new(), false), |(mut acc, inside), y| {
+                let changed = *self.positions.get(&(x, y)).unwrap_or(&false) != inside;
+                if changed { acc.insert((x,y), inside);}
 
                 (acc , inside ^ changed)
             });
-            if inside {l.insert((x, max.1 +1));}
+            if inside {l.insert((x, max.1 +1), true);}
 
-            acc.union(&l).map(|v| *v).collect()
+            l.iter().for_each(|v| {acc.insert(*v.0, *v.1);});
+            acc
         });
 
         let r = Region{plant:'Y', positions: y};
-        r.draw();
         let sides_y = r.perimeter_x() /2;
 
-        let x = (min.1..=max.1).fold(HashSet::new(), |acc, y| {
-            let (mut l, inside) = (min.0..=max.0).fold((HashSet::new(), false), |(mut acc, inside), x| {
-                let changed = self.positions.contains(&(x, y)) != inside;
-                if changed { acc.insert((x, y));}
+        let x = (min.1..=max.1).fold(HashMap::new(), |mut acc, y| {
+            let (mut l, inside) = (min.0..=max.0).fold((HashMap::new(), false), |(mut acc, inside), x| {
+                let changed = *self.positions.get(&(x, y)).unwrap_or(&false) != inside;
+                if changed { acc.insert((x, y) ,inside);}
 
                 (acc , inside ^ changed)
             });
-            if inside {l.insert((max.0 +1, y));}
+            if inside {l.insert((max.0 +1, y), true);}
 
-            acc.union(&l).map(|v| *v).collect()
+            l.iter().for_each(|v| {acc.insert(*v.0, *v.1);});
+            acc
         });
 
         let r = Region{plant:'X', positions: x};
-        r.draw();
         let sides_x = r.perimeter_y() /2;
 
-        println!("Refion {}, sides {} + {} = {}", self.plant, sides_x, sides_y, sides_x + sides_y);
         sides_x + sides_y
     }
 
@@ -119,7 +122,7 @@ impl Region {
 
         for i in min.0..=max.0 {
             for j in min.1..=max.1{
-                print!("{}", if self.positions.contains(&(i,j)) { self.plant} else {'.'});
+                print!("{}", if self.positions.contains_key(&(i,j)) { if self.positions[&(i,j)] {self.plant} else {'O'}} else {'.'});
             }
             print!("\n");
         }
@@ -149,7 +152,7 @@ fn explore(g:&Graph, pos : (usize,usize), visited : &mut Vec<bool>) -> Region {
 
     let c = g[pos.0][pos.1];
 
-    let mut set = HashSet::new();
+    let mut set = HashMap::new();
     let mut next = VecDeque::new();
     next.push_back(pos);
 
@@ -161,7 +164,7 @@ fn explore(g:&Graph, pos : (usize,usize), visited : &mut Vec<bool>) -> Region {
                 next.push_back(*n);
             }
             
-            set.insert(p);
+            set.insert(p,true);
             visited[idx] = true;
         }
 
