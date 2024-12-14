@@ -4,9 +4,9 @@ pub struct Day13;
 
 #[derive(Debug)]
 pub struct Claw {
-    A:(i64,i64),
-    B:(i64,i64),
-    Prize:(i64,i64),
+    a:(i64,i64),
+    b:(i64,i64),
+    prize:(i64,i64),
 }
 
 
@@ -24,20 +24,20 @@ impl Claw {
         let b = get_button(&lines[1]);
         let prize = get_button(&lines[2]);
     
-        Claw{A:a, B:b, Prize:prize}
+        Claw{a, b, prize}
     }
 
 
     fn token_cost(&self, offset : i64) -> u64 {
     
-        let total = (self.Prize.0 + offset, self.Prize.1 + offset);
-        let A = (total.1 * self.B.0 -  total.0 * self.B.1 )/(self.B.0 * self.A.1 - self.B.1 * self.A.0);
-        let B = (total.0 * self.A.1 - total.1 * self.A.0) / (self.B.0 * self.A.1 - self.B.1 * self.A.0);
+        let total = (self.prize.0 + offset, self.prize.1 + offset);
+        let a = (total.1 * self.b.0 -  total.0 * self.b.1 )/(self.b.0 * self.a.1 - self.b.1 * self.a.0);
+        let b = (total.0 * self.a.1 - total.1 * self.a.0) / (self.b.0 * self.a.1 - self.b.1 * self.a.0);
 
-        println!("A : {}, B : {}", A,B);
+        println!("A : {}, B : {}", a,b);
 
-        if A * self.A.0 + B * self.B.0 == total.0 && A * self.A.1 + B * self.B.1 == total.1 {
-            (3 * A +  B) as u64
+        if a * self.a.0 + b * self.b.0 == total.0 && a * self.a.1 + b * self.b.1 == total.1 {
+            (3 * a +  b) as u64
         } else {
             0
         }

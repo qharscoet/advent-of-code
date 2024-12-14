@@ -98,6 +98,7 @@ impl Region {
         self.sides_count_1d(false) + self.sides_count_1d(true)
     }
 
+    #[allow(dead_code)]
     fn draw(&self) {
         let min = self.min();
         let max = self.max();
