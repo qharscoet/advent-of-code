@@ -1,6 +1,4 @@
-use std::{io::Cursor, path::Path};
-
-use image::{ImageError, ImageResult, Luma};
+use image::{ImageResult, Luma};
 
 use crate::solution::Solution;
 
