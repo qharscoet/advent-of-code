@@ -8,3 +8,6 @@
 2023/*.lock
 2024/target
 2024/*.lock
+2024/images
+2025/target
+2025/*.lock
