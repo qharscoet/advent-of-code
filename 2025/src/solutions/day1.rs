@@ -1,5 +1,3 @@
-use core::num;
-
 use crate::solution::Solution;
 
 pub struct Day1;

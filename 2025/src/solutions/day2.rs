@@ -1,6 +1,3 @@
-use core::num;
-use std::iter::empty;
-
 use crate::solution::Solution;
 
 pub struct Day2;
