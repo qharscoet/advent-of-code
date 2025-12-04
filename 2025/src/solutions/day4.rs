@@ -1,4 +1,3 @@
-use std::vec;
 
 use crate::solution::Solution;
 
@@ -6,14 +5,20 @@ pub struct Day4;
 
 type Grid = Vec<Vec<bool>>;
 
-
-fn get_neighbours(grid: &Grid, pos: (usize, usize)) -> Vec<(usize,usize)> {
-	let (i, j) = pos;
+fn get_neighbouring_rolls(grid : &Grid, pos : (usize, usize)) -> Option<usize> {
+    if !grid[pos.0][pos.1] {
+        return None;
+    }
+    let (i, j) = pos;
 	let y_range = i.saturating_sub(1)..=std::cmp::min(i + 1, grid.len() - 1);
 	let x_range = j.saturating_sub(1)..=std::cmp::min(j + 1, grid[0].len() - 1);
-	(y_range).flat_map(|i| x_range.clone().map(move |j| (i,j))).filter(|n| *n != pos).collect()
-}
 
+    Some(grid[y_range]
+        .iter()
+        .flat_map(|row| &row[x_range.clone()])
+        .filter(|&&c| c == true)
+        .count() - 1)
+}
 
 impl Solution for Day4 {
     type Input = Grid;
@@ -32,8 +37,9 @@ impl Solution for Day4 {
 
     fn first_part(&self, input: &Self::Input) -> Self::ReturnType {
         let pos_iter = (0..input.len()).flat_map(|i| (0..input[0].len()).map(move |j| (i,j)));
-        pos_iter.filter(|&pos| input[pos.0][pos.1] && get_neighbours(input, pos).iter().filter(|&&pos2| input[pos2.0][pos2.1]).count() < 4).count() as u32
+        pos_iter.flat_map(|pos| get_neighbouring_rolls(input, pos)).filter(|&count| count < 4).count() as u32
     }
+    
     fn second_part(&self, input: &Self::Input) -> Self::ReturnType {
         let mut grid = input.clone();
         let positions = (0..grid.len()).flat_map(|i| (0..grid[0].len()).map(move |j| (i,j))).collect::<Vec<_>>();
@@ -41,7 +47,7 @@ impl Solution for Day4 {
         let mut removed = 0;
 
         loop {
-            let removable : Vec<_> = positions.iter().filter(|&&pos| grid[pos.0][pos.1] && get_neighbours(&grid, pos).iter().filter(|&&pos2| grid[pos2.0][pos2.1]).count() < 4).collect();
+            let removable : Vec<_> = positions.iter().filter(|&&pos| get_neighbouring_rolls(&grid, pos).is_some_and(|c| c < 4)).collect();
             let to_remove_count = removable.len();
             for pos in removable {
                 grid[pos.0][pos.1] = false;
@@ -50,7 +56,7 @@ impl Solution for Day4 {
             removed += to_remove_count as u32;
             if to_remove_count == 0 {
                 break;
-            }
+            }          
         }
 
         removed
@@ -72,7 +78,6 @@ mod tests {
 @.@@@.@@@@
 .@@@@@@@@.
 @.@.@@@.@.";
-
 
 
     #[test]
