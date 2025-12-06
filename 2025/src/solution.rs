@@ -23,11 +23,13 @@ pub trait Solution {
     }
 
     fn solve(&self) {
+        let now = std::time::Instant::now();
         let input_file = input_file(Self::DAY);
         let input = self
             .load_input(input_file)
             .expect("unable to open input file");
 
+        let parse_time = now.elapsed();
         let now = std::time::Instant::now();
         let s1 = self.first_part(&input);
         let s2 = self.second_part(&input);
@@ -35,6 +37,7 @@ pub trait Solution {
 
         println!("Solution 1: {}", s1);
         println!("Solution 2: {}", s2);
+        println!("Parse time   : {:.2?}", parse_time);
         println!("Elapsed time : {:.2?}", elapsed);
     }
 }
